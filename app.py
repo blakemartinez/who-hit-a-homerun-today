@@ -1,5 +1,6 @@
 from flask import Flask, render_template
 import statsapi
+import pytz
 from datetime import datetime
 import requests
 from bs4 import BeautifulSoup
@@ -48,8 +49,10 @@ def get_player_image_url(player_name):
 @app.route('/')
 def home():
     # Get today's date
-    today_date = datetime.today().strftime('%Y-%m-%d')
-    current_date = datetime.today().strftime('%B %d, %Y')
+    desired_timezone = pytz.timezone('America/Chicago')  # Change 'America/New_York' to your desired timezone
+    current_time = datetime.now(desired_timezone)
+    today_date = current_time.strftime('%Y-%m-%d')
+    current_date = current_time.strftime('%B %d, %Y')
 
    
     # Fetch today's games
