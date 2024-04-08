@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Who Hit a Home Run Today</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Who Hit a Home Run Today</h1>
+        <p id="current-date">{{ current_date }}</p>
+        {% if no_home_runs %}
+            <p id="no-one">No one has hit a dinger...yet</p>
+        {% else %}
+        <div class="player-container">
+            <div class="player-grid">
+                {% for player, home_runs in home_runs.items() %}
+                    <div class="player-card" data-url="{{ home_runs[0][3] }}">
+                        <div class="player-info">
+                            <img src="{{ home_runs[0][4] }}" alt="{{ player }}">
+                            <div class="player-name">{{ player }}</div>
+                            
+                        </div>
+                        <ul>
+                            {% for top_bottom, inning_with_suffix, runs_scored, batter_url, batter_image_url in home_runs %}
+                                <li>
+                                    <strong>{{ top_bottom }} {{ inning_with_suffix }}</strong> - {{ runs_scored }} run homerun
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        document.querySelectorAll('.player-card').forEach(item => {
+            item.addEventListener('click', event => {
+                const url = item.getAttribute('data-url');
+                window.open(url, '_blank');
+            });
+        });
+    </script>
+</body>
+</html>
