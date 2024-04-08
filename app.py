@@ -38,7 +38,6 @@ def get_player_image_url(player_name):
         # Parse the HTML using BeautifulSoup
         soup = BeautifulSoup(html_content, 'html.parser')
         # print(soup)
-        print('hi')
         # Find all image elements containing player images
         image_elements = soup.find_all('img')
         # print(image_elements)
@@ -75,7 +74,7 @@ def home():
                     inning = play['about']['inning']
                     inning_with_suffix = add_suffix(inning)
                     top_bottom = "Top" if play['about']['isTopInning'] else "Bot"
-                    runs_scored = play['result']['rbi']
+                    runs_scored = "Solo" if str(play['result']['rbi']) == "1" else str(play['result']['rbi']) + " run"
                     batter = play['matchup']['batter']['fullName']
                     batter_url = espn_url(batter)
                     batter_image_url = get_player_image_url(batter)  # Fetch player image URL
