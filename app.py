@@ -38,6 +38,7 @@ def get_player_image_url(player_name):
         # Parse the HTML using BeautifulSoup
         soup = BeautifulSoup(html_content, 'html.parser')
         # print(soup)
+        # print('hi')
         # Find all image elements containing player images
         image_elements = soup.find_all('img')
         # print(image_elements)
