@@ -18,6 +18,7 @@ h1 {
 .player-container {
     max-width: 800px; 
     margin: 0 auto;
+    margin-bottom: 20px;
 }
 
 .player-grid {
@@ -84,4 +85,21 @@ li {
     border-radius: 50%; 
     object-fit: cover; 
     margin-bottom: 10px;
+}
+
+footer {
+    /* position: fixed; */
+    bottom: 0;
+    width: 100%;
+    text-align: center;
+    background-color: #f0f0f0;
+}
+
+footer p {
+    margin: 0;
+}
+
+footer a {
+    text-decoration: none; 
+    color: #333; 
 }

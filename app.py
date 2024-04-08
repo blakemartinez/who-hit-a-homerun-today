@@ -38,6 +38,7 @@ def get_player_image_url(player_name):
         # Parse the HTML using BeautifulSoup
         soup = BeautifulSoup(html_content, 'html.parser')
         # print(soup)
+        print('hi')
         # Find all image elements containing player images
         image_elements = soup.find_all('img')
         # print(image_elements)
@@ -49,7 +50,7 @@ def get_player_image_url(player_name):
 @app.route('/')
 def home():
     # Get today's date
-    desired_timezone = pytz.timezone('America/Chicago')  # Change 'America/New_York' to your desired timezone
+    desired_timezone = pytz.timezone('America/Chicago') 
     current_time = datetime.now(desired_timezone)
     today_date = current_time.strftime('%Y-%m-%d')
     current_date = current_time.strftime('%B %d, %Y')
@@ -61,8 +62,6 @@ def home():
     # Dictionary to store home runs for each player
     home_runs_by_player = {}
 
-    index = 0
-
     for game in games:
         game_id = game['game_id']
         # Get play-by-play data for the game
@@ -73,7 +72,6 @@ def home():
             try:
                 # Check if the play resulted in a home run
                 if play.get('result') and play['result'].get('eventType') == 'home_run':
-                    index += 1
                     inning = play['about']['inning']
                     inning_with_suffix = add_suffix(inning)
                     top_bottom = "Top" if play['about']['isTopInning'] else "Bot"
