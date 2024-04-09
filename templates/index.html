@@ -27,9 +27,11 @@
     <div class="container">
         <h1>Who Hit a Home Run Today?</h1>
         <p id="current-date">{{ current_date }}</p>
+        <p id="current-time">Last updated: {{ current_time }} CST</p>
         {% if no_home_runs %}
             <p id="no-one">No one has hit a dinger...yet</p>
         {% else %}
+        <div class="home_run_count">Dingers hit today: {{total_home_run_count}}</div>
         <div class="player-container">
             <div class="player-grid">
                 {% for player, home_runs in home_runs.items() %}
@@ -54,7 +56,8 @@
     </div>
 
     <footer>
-        <p><a href="https://github.com/blakemartinez/who-hit-a-homerun-today" target="_blank">© 2024 Blake Martinez</a></p>
+        <p id="powered-by">Powered by <a href="https://github.com/toddrob99/MLB-StatsAPI" target="_blank">MLB-StatsAPI</a></p>
+        <p><a href="https://github.com/blakemartinez/who-hit-a-homerun-today" target="_blank">2024 Blake Martinez</a></p>
     </footer>
 
     <script>

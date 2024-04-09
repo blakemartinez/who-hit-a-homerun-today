@@ -72,6 +72,10 @@ li {
     text-align: center;
 }
 
+#powered-by {
+    margin-bottom: 5px;
+}
+
 #no-one {
     font-size: 18px;
     color: #625656;

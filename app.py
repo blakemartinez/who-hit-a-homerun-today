@@ -52,6 +52,7 @@ def home():
     # Get today's date
     desired_timezone = pytz.timezone('America/Chicago') 
     current_time = datetime.now(desired_timezone)
+    formatted_time = current_time.strftime('%I:%M %p')
     today_date = current_time.strftime('%Y-%m-%d')
     current_date = current_time.strftime('%B %d, %Y')
 
@@ -62,11 +63,13 @@ def home():
     # Dictionary to store home runs for each player
     home_runs_by_player = {}
 
+    total_home_run_count = 0
+
     for game in games:
         game_id = game['game_id']
         # Get play-by-play data for the game
         plays = statsapi.get("game_playByPlay", {"gamePk": game_id})
-
+ 
         # Iterate through each play in the game
         for play in plays['allPlays']:
             try:
@@ -85,13 +88,14 @@ def home():
                     if batter not in home_runs_by_player:
                         home_runs_by_player[batter] = []
                     home_runs_by_player[batter].append((top_bottom, inning_with_suffix, runs_scored, batter_url, batter_image_url))
+                    total_home_run_count+=1
             except KeyError:
                 pass
 
     # Check if home_runs_by_player is empty
     no_home_runs = not bool(home_runs_by_player)
 
-    return render_template('index.html', current_date=current_date, home_runs=home_runs_by_player, no_home_runs=no_home_runs)
+    return render_template('index.html', current_date=current_date, current_time=formatted_time, home_runs=home_runs_by_player, no_home_runs=no_home_runs, total_home_run_count=total_home_run_count)
 
 if __name__ == '__main__':
     app.run(debug=True, port=5001)
