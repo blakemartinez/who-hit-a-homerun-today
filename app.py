@@ -80,6 +80,19 @@ def home():
                     top_bottom = "Top" if play['about']['isTopInning'] else "Bot"
                     runs_scored = "Solo" if str(play['result']['rbi']) == "1" else str(play['result']['rbi']) + " run"
                     batter = play['matchup']['batter']['fullName']
+                    player_data = statsapi.get('sports_players', {'season': 2024, 'gameType': 'W'})['people']
+
+                    player_id = next(x['id'] for x in player_data if x['fullName'] == batter)
+                    print('Batter:', batter)
+                    print("Player ID:", player_id)
+
+                    try:
+                        player_stats = statsapi.player_stat_data(player_id, 'homeruns', 'season')
+                        current_team = player_stats.get('current_team')
+                        num_homeruns_for_player = player_stats.get('stats')[0].get('stats').get('homeRuns')
+                    except (IndexError, AttributeError):
+                        num_homeruns_for_player = 0
+                    print("Number of home runs for player:", num_homeruns_for_player)
                     batter_url = espn_url(batter)
                     batter_image_url = get_player_image_url(batter)  # Fetch player image URL
 
@@ -87,7 +100,7 @@ def home():
                     # Store home run information for each player
                     if batter not in home_runs_by_player:
                         home_runs_by_player[batter] = []
-                    home_runs_by_player[batter].append((top_bottom, inning_with_suffix, runs_scored, batter_url, batter_image_url))
+                    home_runs_by_player[batter].append((top_bottom, inning_with_suffix, runs_scored, batter_url, batter_image_url, num_homeruns_for_player, current_team))
                     total_home_run_count+=1
             except KeyError:
                 pass
@@ -98,4 +111,4 @@ def home():
     return render_template('index.html', current_date=current_date, current_time=formatted_time, home_runs=home_runs_by_player, no_home_runs=no_home_runs, total_home_run_count=total_home_run_count)
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+    app.run(debug=True, port=5002)

@@ -29,9 +29,13 @@
         <p id="current-date">{{ current_date }}</p>
         <p id="current-time">Last updated: {{ current_time }} CST</p>
         {% if no_home_runs %}
-            <p id="no-one">No one has hit a dinger...yet</p>
+            <p id="no-one">No one...yet</p>
         {% else %}
-        <div class="home_run_count">Dingers hit today: {{total_home_run_count}}</div>
+        {% if total_home_run_count == 1 %}
+            <div id="home_run_count">{{total_home_run_count}} HR today.</div>
+        {% else %}
+            <div id="home_run_count">{{total_home_run_count}} HR's today.</div>
+        {% endif %}
         <div class="player-container">
             <div class="player-grid">
                 {% for player, home_runs in home_runs.items() %}
@@ -39,15 +43,23 @@
                         <div class="player-info">
                             <img src="{{ home_runs[0][4] }}" alt="{{ player }}">
                             <div class="player-name">{{ player }}</div>
+                            <div class="player-team">{{ home_runs[0][6] }}</div>
                             
                         </div>
                         <ul>
-                            {% for top_bottom, inning_with_suffix, runs_scored, batter_url, batter_image_url in home_runs %}
+                            {% for top_bottom, inning_with_suffix, runs_scored, batter_url, batter_image_url, num_homeruns_for_player, current_team in home_runs %}
                                 <li>
                                     <strong>{{ top_bottom }} {{ inning_with_suffix }}</strong> - {{ runs_scored }} homerun
                                 </li>
                             {% endfor %}
                         </ul>
+                        {% if home_runs[0][5] %}
+                            {% if home_runs[0][5] == 1 %}
+                                <p class="player-homeruns-season">2024: {{home_runs[0][5]}} HR</p>
+                            {% else %}
+                                <p class="player-homeruns-season">2024: {{home_runs[0][5]}} HR's</p>
+                            {% endif %}
+                        {% endif %}
                     </div>
                 {% endfor %}
             </div>
