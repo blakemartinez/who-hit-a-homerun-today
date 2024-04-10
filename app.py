@@ -8,7 +8,6 @@ import re
 
 app = Flask(__name__)
 
-# Function to add suffix to inning number
 def add_suffix(num):
     if num % 10 == 1 and num != 11:
         return f"{num}st"
@@ -19,35 +18,28 @@ def add_suffix(num):
     else:
         return f"{num}th"
         
-# Function to construct Baseball Reference URL for a player
 def espn_url(player_name):
     name = player_name.replace("'", "").replace(" ", "%20")
     return f"https://www.mlb.com/search?q={name}"
 
-# Function to get player image URL from Sports Open Data API
 def get_player_image_url(player_name):
     try: 
         headers = requests.utils.default_headers()
         headers.update({
-    'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0',
-})
+            'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0',
+        })
         name = player_name.replace("'", "").replace(" ", "%20")
         url= f"https://www.google.com/search?q={name}%20espn%20baseball&sxsrf=ALeKk03xBalIZi7BAzyIRw8R4_KrIEYONg:1620885765119&source=lnms&tbm=isch&sa=X&ved=2ahUKEwjv44CC_sXwAhUZyjgGHSgdAQ8Q_AUoAXoECAEQAw&cshid=1620885828054361"
         response = requests.get(url, headers=headers)
-        # print(url)
         html_content = response.text
         # Parse the HTML using BeautifulSoup
         soup = BeautifulSoup(html_content, 'html.parser')
-        # print(soup)
-        # print('hi')
-        # Find all image elements containing player images
         image_elements = soup.find_all('img')
-        # print(image_elements)
         return image_elements[1]['src']
     except (requests.RequestException, KeyError, IndexError, TypeError) as e:
         print(f"Error fetching image URL for {player_name}: {e}")
         return None
- 
+
 @app.route('/')
 def home():
     # Get today's date
@@ -57,7 +49,6 @@ def home():
     today_date = current_time.strftime('%Y-%m-%d')
     current_date = current_time.strftime('%B %d, %Y')
 
-   
     # Fetch today's games
     games = statsapi.schedule(sportId=1, date=today_date)
 
@@ -70,23 +61,23 @@ def home():
         game_id = game['game_id']
         # Get play-by-play data for the game
         plays = statsapi.get("game_playByPlay", {"gamePk": game_id})
- 
+
         # Iterate through each play in the game
         for play in plays['allPlays']:
             try:
                 # Check if the play resulted in a home run
                 if play.get('result') and play['result'].get('eventType') == 'home_run':
-                    
+
                     batter = play['matchup']['batter']['fullName']
                     batter_id = play['matchup']['batter']['id']
-                    
+
                     # unique to each homerun
                     inning = play['about']['inning']
                     inning_with_suffix = add_suffix(inning)
                     top_bottom = "Top" if play['about']['isTopInning'] else "Bot"
                     runs_scored = "Solo" if str(play['result']['rbi']) == "1" else str(play['result']['rbi']) + " run"
                     homerun_number = int(re.search(r'\((\d+)\)', play['result']['description']).group(1))
-                    # For launch speed and distance
+                    # Place in json that holds distance / launch speed
                     play_events = play['playEvents']
 
                     # Define patterns to search for
