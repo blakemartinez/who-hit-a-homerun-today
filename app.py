@@ -83,8 +83,8 @@ def home():
                     player_data = statsapi.get('sports_players', {'season': 2024, 'gameType': 'W'})['people']
 
                     player_id = next(x['id'] for x in player_data if x['fullName'] == batter)
-                    print('Batter:', batter)
-                    print("Player ID:", player_id)
+                    # print('Batter:', batter)
+                    # print("Player ID:", player_id)
 
                     try:
                         player_stats = statsapi.player_stat_data(player_id, 'homeruns', 'season')
@@ -92,7 +92,7 @@ def home():
                         num_homeruns_for_player = player_stats.get('stats')[0].get('stats').get('homeRuns')
                     except (IndexError, AttributeError):
                         num_homeruns_for_player = 0
-                    print("Number of home runs for player:", num_homeruns_for_player)
+                    # print("Number of home runs for player:", num_homeruns_for_player)
                     batter_url = espn_url(batter)
                     batter_image_url = get_player_image_url(batter)  # Fetch player image URL
 
