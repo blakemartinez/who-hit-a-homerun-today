@@ -25,7 +25,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Who Hit a Home Run Today?</h1>
+        <h1>Who Hit a Homerun Today?</h1>
         <p id="current-date">{{ current_date }}</p>
         <p id="current-time">Last updated: {{ current_time }} CST</p>
         {% if no_home_runs %}
@@ -47,9 +47,10 @@
                             
                         </div>
                         <ul>
-                            {% for top_bottom, inning_with_suffix, runs_scored, batter_url, batter_image_url, num_homeruns_for_player, current_team in home_runs %}
+                            {% for top_bottom, inning_with_suffix, runs_scored, batter_url, batter_image_url, num_homeruns_for_player, current_team, exitVelo, distance in home_runs %}
                                 <li>
-                                    <strong>{{ top_bottom }} {{ inning_with_suffix }}</strong> - {{ runs_scored }} homerun
+                                    <strong>{{ top_bottom }} {{ inning_with_suffix }}</strong> - {{ runs_scored }} homerun 
+                                    <p class="hrStats">{{ distance }} ft | {{ exitVelo }} exit velo</p>
                                 </li>
                             {% endfor %}
                         </ul>

@@ -63,6 +63,14 @@ h1 {
     margin-bottom: 5px;
 }
 
+.hrStats {
+    padding: 0;
+    font-size: 10px;
+    margin-top: -2px;
+    text-align: right;
+    color: #625656;
+}
+
 ul {
     list-style-type: none;
     padding: 0;

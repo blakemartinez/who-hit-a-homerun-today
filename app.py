@@ -4,6 +4,7 @@ import pytz
 from datetime import datetime
 import requests
 from bs4 import BeautifulSoup
+import re
 
 app = Flask(__name__)
 
@@ -75,32 +76,58 @@ def home():
             try:
                 # Check if the play resulted in a home run
                 if play.get('result') and play['result'].get('eventType') == 'home_run':
+                    
+                    batter = play['matchup']['batter']['fullName']
+                    batter_id = play['matchup']['batter']['id']
+                    
+                    # unique to each homerun
                     inning = play['about']['inning']
                     inning_with_suffix = add_suffix(inning)
                     top_bottom = "Top" if play['about']['isTopInning'] else "Bot"
                     runs_scored = "Solo" if str(play['result']['rbi']) == "1" else str(play['result']['rbi']) + " run"
-                    batter = play['matchup']['batter']['fullName']
-                    player_data = statsapi.get('sports_players', {'season': 2024, 'gameType': 'W'})['people']
+                    homerun_number = int(re.search(r'\((\d+)\)', play['result']['description']).group(1))
+                    # For launch speed and distance
+                    play_events = play['playEvents']
 
-                    player_id = next(x['id'] for x in player_data if x['fullName'] == batter)
-                    # print('Batter:', batter)
-                    # print("Player ID:", player_id)
+                    # Define patterns to search for
+                    patterns = {
+                        'totalDistance': r"'totalDistance'\s*:\s*(\d+\.?\d*)",
+                        'launchSpeed': r"'launchSpeed'\s*:\s*(\d+\.?\d*)"
+                    }
 
-                    try:
-                        player_stats = statsapi.player_stat_data(player_id, 'homeruns', 'season')
+                    # Initialize results dictionary
+                    results = {}
+
+                    # Search for patterns in the string
+                    for key, pattern in patterns.items():
+                        match = re.search(pattern, str(play_events))
+                        if match:
+                            results[key] = float(match.group(1))
+                        else:
+                            results[key] = None
+
+                    # save an api call if we already have info
+                    if batter in home_runs_by_player:
+                        current_team = home_runs_by_player[batter][0]
+                        batter_url = home_runs_by_player[batter][0]
+                        batter_image_url = home_runs_by_player[batter][0]
+                    else:
+                        player_stats = statsapi.player_stat_data(batter_id, 'homeruns', 'season')
                         current_team = player_stats.get('current_team')
-                        num_homeruns_for_player = player_stats.get('stats')[0].get('stats').get('homeRuns')
-                    except (IndexError, AttributeError):
-                        num_homeruns_for_player = 0
-                    # print("Number of home runs for player:", num_homeruns_for_player)
-                    batter_url = espn_url(batter)
-                    batter_image_url = get_player_image_url(batter)  # Fetch player image URL
-
+                        batter_url = espn_url(batter)
+                        batter_image_url = get_player_image_url(batter)
+                    # print('\n\n')
+                    # print("Batter: ", batter)
+                    # print("Batter ID:", batter_id)
+                    # print("Team: ", current_team)
+                    # print("Homerun Number:", homerun_number)
+                    # print("Launch Speed: ", results['launchSpeed'])
+                    # print("Distance: ", results['totalDistance'])
 
                     # Store home run information for each player
                     if batter not in home_runs_by_player:
                         home_runs_by_player[batter] = []
-                    home_runs_by_player[batter].append((top_bottom, inning_with_suffix, runs_scored, batter_url, batter_image_url, num_homeruns_for_player, current_team))
+                    home_runs_by_player[batter].append((top_bottom, inning_with_suffix, runs_scored, batter_url, batter_image_url, homerun_number, current_team, results['launchSpeed'], int(results['totalDistance'])))
                     total_home_run_count+=1
             except KeyError:
                 pass
