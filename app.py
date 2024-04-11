@@ -29,7 +29,7 @@ def get_player_image_url(player_name):
             'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0',
         })
         name = player_name.replace("'", "").replace(" ", "%20")
-        url= f"https://www.google.com/search?q={name}%20espn%20baseball&sxsrf=ALeKk03xBalIZi7BAzyIRw8R4_KrIEYONg:1620885765119&source=lnms&tbm=isch&sa=X&ved=2ahUKEwjv44CC_sXwAhUZyjgGHSgdAQ8Q_AUoAXoECAEQAw&cshid=1620885828054361"
+        url= f"https://www.google.com/search?q={name}%20stats%20espn%20baseball&sxsrf=ALeKk03xBalIZi7BAzyIRw8R4_KrIEYONg:1620885765119&source=lnms&tbm=isch&sa=X&ved=2ahUKEwjv44CC_sXwAhUZyjgGHSgdAQ8Q_AUoAXoECAEQAw&cshid=1620885828054361"
         response = requests.get(url, headers=headers)
         html_content = response.text
         # Parse the HTML using BeautifulSoup
