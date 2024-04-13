@@ -8,6 +8,39 @@ import re
 
 app = Flask(__name__)
 
+mlb_team_logos = {
+    'Arizona Diamondbacks': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Arizona_Diamondbacks_logo_teal.svg/178px-Arizona_Diamondbacks_logo_teal.svg.png',
+    'Atlanta Braves': 'https://upload.wikimedia.org/wikipedia/en/thumb/f/f2/Atlanta_Braves.svg/263px-Atlanta_Braves.svg.png',
+    'Baltimore Orioles': 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Baltimore_Orioles_Script.svg/263px-Baltimore_Orioles_Script.svg.png',
+    'Boston Red Sox': 'https://upload.wikimedia.org/wikipedia/en/thumb/6/6d/RedSoxPrimary_HangingSocks.svg/153px-RedSoxPrimary_HangingSocks.svg.png',
+    'Chicago White Sox': 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Chicago_White_Sox.svg/108px-Chicago_White_Sox.svg.png',
+    'Chicago Cubs': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Chicago_Cubs_logo.svg/149px-Chicago_Cubs_logo.svg.png',
+    'Cincinnati Reds': 'https://upload.wikimedia.org/wikipedia/commons/0/01/Cincinnati_Reds_Logo.svg',
+    'Cleveland Guardians': 'https://upload.wikimedia.org/wikipedia/en/thumb/a/a9/Guardians_winged_%22G%22.svg/178px-Guardians_winged_%22G%22.svg.png',
+    'Colorado Rockies': 'https://upload.wikimedia.org/wikipedia/en/thumb/c/c0/Colorado_Rockies_full_logo.svg/224px-Colorado_Rockies_full_logo.svg.png',
+    'Detroit Tigers': 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Detroit_Tigers_logo.svg/104px-Detroit_Tigers_logo.svg.png',
+    'Houston Astros': 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Houston-Astros-Logo.svg/150px-Houston-Astros-Logo.svg.png',
+    'Kansas City Royals': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Kansas_City_Royals.svg/130px-Kansas_City_Royals.svg.png',
+    'Los Angeles Angels': 'https://upload.wikimedia.org/wikipedia/commons/8/8b/Los_Angeles_Angels_of_Anaheim.svg',
+    'Los Angeles Dodgers': 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Los_Angeles_Dodgers_Logo.svg/145px-Los_Angeles_Dodgers_Logo.svg.png',
+    'Miami Marlins': 'https://upload.wikimedia.org/wikipedia/en/thumb/f/fd/Marlins_team_logo.svg/154px-Marlins_team_logo.svg.png',
+    'Milwaukee Brewers': 'https://upload.wikimedia.org/wikipedia/en/thumb/b/b8/Milwaukee_Brewers_logo.svg/150px-Milwaukee_Brewers_logo.svg.png',
+    'Minnesota Twins': 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Minnesota_Twins_wordmark_logo_%282023_rebrand%29.svg/263px-Minnesota_Twins_wordmark_logo_%282023_rebrand%29.svg.png',
+    'New York Yankees': 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/New_York_Yankees_Primary_Logo.svg/136px-New_York_Yankees_Primary_Logo.svg.png',
+    'New York Mets': 'https://upload.wikimedia.org/wikipedia/en/thumb/7/7b/New_York_Mets.svg/150px-New_York_Mets.svg.png',
+    'Oakland Athletics': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Oakland_A%27s_logo.svg/150px-Oakland_A%27s_logo.svg.png',
+    'Philadelphia Phillies': 'https://upload.wikimedia.org/wikipedia/en/thumb/f/f0/Philadelphia_Phillies_%282019%29_logo.svg/169px-Philadelphia_Phillies_%282019%29_logo.svg.png',
+    'Pittsburgh Pirates': 'https://upload.wikimedia.org/wikipedia/commons/8/85/Pittsburgh_Pirates_Logo.svg',
+    'San Diego Padres': 'https://upload.wikimedia.org/wikipedia/commons/a/a4/SDPadres_logo.svg',
+    'San Francisco Giants': 'https://upload.wikimedia.org/wikipedia/commons/4/49/San_Francisco_Giants_Cap_Insignia.svg',
+    'Seattle Mariners': 'https://upload.wikimedia.org/wikipedia/en/thumb/6/6d/Seattle_Mariners_logo_%28low_res%29.svg/150px-Seattle_Mariners_logo_%28low_res%29.svg.png',
+    'St. Louis Cardinals': 'https://upload.wikimedia.org/wikipedia/en/9/9d/St._Louis_Cardinals_logo.svg',
+    'Tampa Bay Rays': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/Tampa_Bay_Rays_Logo.svg/263px-Tampa_Bay_Rays_Logo.svg.png',
+    'Texas Rangers': 'https://upload.wikimedia.org/wikipedia/en/4/41/Texas_Rangers.svg',
+    'Toronto Blue Jays': 'https://upload.wikimedia.org/wikipedia/en/b/ba/Toronto_Blue_Jays_logo.svg',
+    'Washington Nationals': 'https://upload.wikimedia.org/wikipedia/commons/a/a3/Washington_Nationals_logo.svg'
+}
+
 def add_suffix(num):
     if num % 10 == 1 and num != 11:
         return f"{num}st"
@@ -107,7 +140,8 @@ def home():
                         current_team = player_stats.get('current_team')
                         batter_url = espn_url(batter)
                         # batter_image_url = get_player_image_url(batter)
-                        batter_image_url = 'https://www.shutterstock.com/image-photo/baseball-players-action-on-stadium-600nw-426420286.jpg'
+                        # batter_image_url = 'https://www.shutterstock.com/image-photo/baseball-players-action-on-stadium-600nw-426420286.jpg'
+                        batter_image_url = mlb_team_logos[current_team]
                     # print('\n\n')
                     # print("Batter: ", batter)
                     # print("Batter ID:", batter_id)
@@ -130,4 +164,4 @@ def home():
     return render_template('index.html', current_date=current_date, current_time=formatted_time, home_runs=home_runs_by_player, no_home_runs=no_home_runs, total_home_run_count=total_home_run_count)
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5002)
+    app.run(debug=True, port=5001)
