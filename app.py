@@ -106,7 +106,8 @@ def home():
                         player_stats = statsapi.player_stat_data(batter_id, 'homeruns', 'season')
                         current_team = player_stats.get('current_team')
                         batter_url = espn_url(batter)
-                        batter_image_url = get_player_image_url(batter)
+                        # batter_image_url = get_player_image_url(batter)
+                        batter_image_url = 'https://www.shutterstock.com/image-photo/baseball-players-action-on-stadium-600nw-426420286.jpg'
                     # print('\n\n')
                     # print("Batter: ", batter)
                     # print("Batter ID:", batter_id)
