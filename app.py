@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 import statsapi
 import pytz
 from datetime import datetime
@@ -20,7 +20,7 @@ mlb_team_logos = {
     'Colorado Rockies': 'https://upload.wikimedia.org/wikipedia/en/thumb/c/c0/Colorado_Rockies_full_logo.svg/224px-Colorado_Rockies_full_logo.svg.png',
     'Detroit Tigers': 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Detroit_Tigers_logo.svg/104px-Detroit_Tigers_logo.svg.png',
     'Houston Astros': 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Houston-Astros-Logo.svg/150px-Houston-Astros-Logo.svg.png',
-    'Kansas City Royals': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Kansas_City_Royals.svg/130px-Kansas_City_Royals.svg.png',
+    'Kansas City Royals': 'https://upload.wikimedia.org/wikipedia/commons/7/78/Kansas_City_Royals_Primary_Logo.svg',
     'Los Angeles Angels': 'https://upload.wikimedia.org/wikipedia/commons/8/8b/Los_Angeles_Angels_of_Anaheim.svg',
     'Los Angeles Dodgers': 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Los_Angeles_Dodgers_Logo.svg/145px-Los_Angeles_Dodgers_Logo.svg.png',
     'Miami Marlins': 'https://upload.wikimedia.org/wikipedia/en/thumb/f/fd/Marlins_team_logo.svg/154px-Marlins_team_logo.svg.png',
@@ -28,6 +28,7 @@ mlb_team_logos = {
     'Minnesota Twins': 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Minnesota_Twins_wordmark_logo_%282023_rebrand%29.svg/263px-Minnesota_Twins_wordmark_logo_%282023_rebrand%29.svg.png',
     'New York Yankees': 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/New_York_Yankees_Primary_Logo.svg/136px-New_York_Yankees_Primary_Logo.svg.png',
     'New York Mets': 'https://upload.wikimedia.org/wikipedia/en/thumb/7/7b/New_York_Mets.svg/150px-New_York_Mets.svg.png',
+    'Athletics': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Oakland_A%27s_logo.svg/150px-Oakland_A%27s_logo.svg.png',
     'Oakland Athletics': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Oakland_A%27s_logo.svg/150px-Oakland_A%27s_logo.svg.png',
     'Philadelphia Phillies': 'https://upload.wikimedia.org/wikipedia/en/thumb/f/f0/Philadelphia_Phillies_%282019%29_logo.svg/169px-Philadelphia_Phillies_%282019%29_logo.svg.png',
     'Pittsburgh Pirates': 'https://upload.wikimedia.org/wikipedia/commons/8/85/Pittsburgh_Pirates_Logo.svg',
@@ -37,7 +38,7 @@ mlb_team_logos = {
     'St. Louis Cardinals': 'https://upload.wikimedia.org/wikipedia/en/9/9d/St._Louis_Cardinals_logo.svg',
     'Tampa Bay Rays': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/Tampa_Bay_Rays_Logo.svg/263px-Tampa_Bay_Rays_Logo.svg.png',
     'Texas Rangers': 'https://upload.wikimedia.org/wikipedia/en/4/41/Texas_Rangers.svg',
-    'Toronto Blue Jays': 'https://upload.wikimedia.org/wikipedia/en/b/ba/Toronto_Blue_Jays_logo.svg',
+    'Toronto Blue Jays': 'http://upload.wikimedia.org/wikipedia/en/6/68/Toronto_Blue_Jays_cap.svg',
     'Washington Nationals': 'https://upload.wikimedia.org/wikipedia/commons/a/a3/Washington_Nationals_logo.svg'
 }
 
@@ -73,14 +74,19 @@ def get_player_image_url(player_name):
         print(f"Error fetching image URL for {player_name}: {e}")
         return None
 
-@app.route('/')
+@app.route('/', methods= ['GET', 'POST'])
 def home():
+    date_to_use = ''
+    if request.method == 'POST':
+        date_to_use = request.form['customDate']
+    print(date_to_use)
     # Get today's date
     desired_timezone = pytz.timezone('America/Chicago') 
-    current_time = datetime.now(desired_timezone)
+    current_time = datetime.strptime(date_to_use, '%Y-%m-%d') if date_to_use else datetime.now(desired_timezone)
     formatted_time = current_time.strftime('%I:%M %p')
     today_date = current_time.strftime('%Y-%m-%d')
     current_date = current_time.strftime('%B %d, %Y')
+    season = current_time.year
 
     # Fetch today's games
     games = statsapi.schedule(sportId=1, date=today_date)
@@ -92,6 +98,8 @@ def home():
 
     for game in games:
         game_id = game['game_id']
+        home_team = game['home_name']
+        away_team = game['away_name']
         # Get play-by-play data for the game
         plays = statsapi.get("game_playByPlay", {"gamePk": game_id})
 
@@ -137,11 +145,16 @@ def home():
                         batter_image_url = home_runs_by_player[batter][0]
                     else:
                         player_stats = statsapi.player_stat_data(batter_id, 'homeruns', 'season')
-                        current_team = player_stats.get('current_team')
+                        current_team = away_team if top_bottom == "Top" else home_team
                         batter_url = espn_url(batter)
                         # batter_image_url = get_player_image_url(batter)
                         # batter_image_url = 'https://www.shutterstock.com/image-photo/baseball-players-action-on-stadium-600nw-426420286.jpg'
-                        batter_image_url = mlb_team_logos[current_team]
+                        batter_image_url = ''
+                        try:
+                            batter_image_url = mlb_team_logos[current_team]
+                        except KeyError as k:
+                            print("KeyError: ", k)
+                            batter_image_url = 'https://www.shutterstock.com/image-photo/baseball-players-action-on-stadium-600nw-426420286.jpg'
                     # print('\n\n')
                     # print("Batter: ", batter)
                     # print("Batter ID:", batter_id)
@@ -153,15 +166,21 @@ def home():
                     # Store home run information for each player
                     if batter not in home_runs_by_player:
                         home_runs_by_player[batter] = []
-                    home_runs_by_player[batter].append((top_bottom, inning_with_suffix, runs_scored, batter_url, batter_image_url, homerun_number, current_team, results['launchSpeed'], int(results['totalDistance'])))
+                    home_runs_by_player[batter].append((top_bottom, inning_with_suffix, runs_scored, batter_url, batter_image_url, homerun_number, current_team, results['launchSpeed'], int(results['totalDistance'] or 0)))
                     total_home_run_count+=1
-            except KeyError:
+            except KeyError as k:
+                print("KeyError: ", k)
                 pass
-
+            
+    print("\n\n\n")
+    print(home_runs_by_player)
     # Check if home_runs_by_player is empty
     no_home_runs = not bool(home_runs_by_player)
 
-    return render_template('index.html', current_date=current_date, current_time=formatted_time, home_runs=home_runs_by_player, no_home_runs=no_home_runs, total_home_run_count=total_home_run_count)
+    hr_leaders = statsapi.league_leader_data('homeruns', limit=5, season=season)
+    print(hr_leaders)
+
+    return render_template('index.html', current_date=current_date, current_time=formatted_time, home_runs=home_runs_by_player, no_home_runs=no_home_runs, total_home_run_count=total_home_run_count, hr_leaders=hr_leaders)
 
 if __name__ == '__main__':
     app.run(debug=True, port=5001)

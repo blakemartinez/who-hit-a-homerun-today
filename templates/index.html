@@ -26,10 +26,19 @@
 <body>
     <div class="container">
         <h1>Who Hit a Homerun Today?</h1>
+        <!-- <div style="display=inline-flex"> -->
+        <!-- <input type="submit" name="submit_button" value="Do Something"> -->
         <p id="current-date">{{ current_date }}</p>
+        <!-- <input type="submit" name="submit_button" value="Do Something"> -->
+        <!-- </div> -->
         <p id="current-time">Last updated: {{ current_time }} CST</p>
+        <form method="POST" action="/">
+        <label for="date">change date (1950-):</label>
+        <input type="date" id="date" name="customDate">
+        <input id="submit" type="submit" value="ding">
+        </form> 
         {% if no_home_runs %}
-            <p id="no-one">No one...yet</p>
+        <p id="no-one">No one...yet</p>
         {% else %}
         {% if total_home_run_count == 1 %}
             <div id="home_run_count">{{total_home_run_count}} HR today.</div>
@@ -56,9 +65,9 @@
                         </ul>
                         {% if home_runs[0][5] %}
                             {% if home_runs[0][5] == 1 %}
-                                <p class="player-homeruns-season">2024 Season: {{home_runs[0][5]}} HR</p>
+                                <p class="player-homeruns-season">{{current_date[-4:]}} Season: {{home_runs[0][5]}} HR</p>
                             {% else %}
-                                <p class="player-homeruns-season">2024 Season: {{home_runs[0][5]}} HR's</p>
+                                <p class="player-homeruns-season">{{current_date[-4:]}} Season: {{home_runs[0][5]}} HR's</p>
                             {% endif %}
                         {% endif %}
                     </div>
