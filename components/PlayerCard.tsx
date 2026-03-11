@@ -87,7 +87,7 @@ function HRRow({
               {hr.topBottom} {hr.inning} &middot; {hr.runsScored}
             </p>
             {hr.milestone && (
-              <p className="text-zinc-400 text-xs mt-0.5">★ {hr.milestone}</p>
+              <p className="text-emerald-600 text-xs mt-0.5">★ {hr.milestone}</p>
             )}
             {(hr.distance != null || hr.exitVelo != null) && (
               <div className="flex gap-3 mt-0.5">
