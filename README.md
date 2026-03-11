@@ -1,19 +1,28 @@
 # Who Hit a Homerun Today?
 
-*_Dingers_*
+*Dingers.*
 
 https://who-hit-a-homerun-today.vercel.app/
 
 ## Description
 
-- Utilizing https://github.com/toddrob99/MLB-StatsAPI to get updated MLB data
-- Scraping player images from google images
+Live MLB home run tracker. Shows every homer hit on a given date with player headshots, trajectory animations (launch angle, exit velo, distance), and the venue it was hit at.
 
 ## Tech
-- Flask
-- Python
-- MLB-StatsAPI (statsapi)
-- BeautifulSoup
+
+- Next.js 15 (App Router, TypeScript)
+- Tailwind CSS
+- MLB Stats API (public REST API, no key required)
+- Deployed on Vercel
 
 ## Dev
+
+```bash
+npm install
+npm run dev   # http://localhost:3000
+npm run build
+```
+
+## Dev
+
 Blake Martinez
