@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="5" fill="#0a0a0a"/>
+  <!-- Trajectory arc -->
+  <path d="M 27,27 C 22,4 6,5 4,18" fill="none" stroke="#e4e4e7" stroke-width="2.2" stroke-linecap="round"/>
+  <!-- Ball at apex -->
+  <circle cx="12" cy="5.5" r="2.8" fill="#e4e4e7"/>
+</svg>
