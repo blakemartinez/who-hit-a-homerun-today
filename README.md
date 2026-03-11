@@ -24,7 +24,7 @@ Cards can have more than one border if they hit multiple thresholds.
 
 - Next.js 15 (App Router, TypeScript)
 - Tailwind CSS
-- MLB Stats API — public REST, no key needed
+- [MLB Stats API](https://statsapi.mlb.com) — public REST, no key needed
 - Deployed on Vercel
 
 ## dev
