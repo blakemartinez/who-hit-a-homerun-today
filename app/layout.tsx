@@ -18,14 +18,12 @@ export const metadata: Metadata = {
     description:
       "Live MLB home run tracker. See every home run hit today — distance, exit velocity, pitch type, and more.",
     url: "https://homeruntoday.vercel.app",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Who Hit a Homerun Today — MLB home run tracker" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Who Hit a Homerun Today?",
     description:
       "Live MLB home run tracker. See every home run hit today — distance, exit velocity, pitch type, and more.",
-    images: ["/og-image.png"],
   },
   alternates: { canonical: "https://homeruntoday.vercel.app" },
   manifest: "/favicon/manifest.json",
