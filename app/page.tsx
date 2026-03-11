@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { getSchedule, getPlayByPlay, getHRLeaders, Play } from "@/lib/mlb";
 import {
   addSuffix,
@@ -9,6 +10,30 @@ import {
 import DatePicker from "@/components/DatePicker";
 import PlayerGrid from "@/components/PlayerGrid";
 import InfoModal from "@/components/InfoModal";
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ date?: string }>;
+}): Promise<Metadata> {
+  const params = await searchParams;
+  const date = params.date ?? getTodayChicago();
+  const displayDate = formatDisplayDate(date);
+  const isToday = date === getTodayChicago();
+
+  const title = isToday ? "Who Hit a Homerun Today?" : `Home Runs on ${displayDate}`;
+  const description = isToday
+    ? "Live MLB home run tracker — see every home run hit today with distance, exit velocity, launch angle, and pitch data."
+    : `MLB home runs hit on ${displayDate} — distance, exit velocity, launch angle, and pitch data for every home run.`;
+  const url = isToday ? "https://homeruntoday.vercel.app" : `https://homeruntoday.vercel.app/?date=${date}`;
+
+  return {
+    title,
+    description,
+    openGraph: { title, description, url },
+    alternates: { canonical: url },
+  };
+}
 
 export interface HomeRunEvent {
   topBottom: "Top" | "Bot";
@@ -267,6 +292,47 @@ export default async function Page({
           </a>
         </p>
       </footer>
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            name: isToday ? "Who Hit a Homerun Today?" : `MLB Home Runs — ${displayDate}`,
+            description: `MLB home runs hit on ${displayDate}`,
+            url: isToday ? "https://homeruntoday.vercel.app" : `https://homeruntoday.vercel.app/?date=${date}`,
+            about: {
+              "@type": "SportsEvent",
+              name: `MLB Games — ${displayDate}`,
+              startDate: date,
+              sport: "Baseball",
+              organizer: { "@type": "SportsOrganization", name: "Major League Baseball", url: "https://www.mlb.com" },
+            },
+            ...(players.length > 0 && {
+              mainEntity: {
+                "@type": "ItemList",
+                name: `Home runs hit on ${displayDate}`,
+                numberOfItems: totalHRs,
+                itemListElement: players.flatMap((player) =>
+                  player.homeRuns.map((hr, i) => ({
+                    "@type": "ListItem",
+                    position: i + 1,
+                    item: {
+                      "@type": "Event",
+                      name: `${player.name} home run`,
+                      description: `${player.name} (${player.team}) hit a ${hr.runsScored} home run in the ${hr.topBottom} of the ${hr.inning} at ${hr.venue}${hr.distance ? `, ${hr.distance} ft` : ""}${hr.exitVelo ? `, ${hr.exitVelo} mph exit velocity` : ""}.`,
+                      startDate: date,
+                      location: { "@type": "Place", name: hr.venue },
+                      performer: { "@type": "Person", name: player.name },
+                    },
+                  }))
+                ),
+              },
+            }),
+          }),
+        }}
+      />
     </main>
   );
 }
