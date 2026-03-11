@@ -1,0 +1,272 @@
+import { getSchedule, getPlayByPlay, getHRLeaders, Play } from "@/lib/mlb";
+import {
+  addSuffix,
+  formatDisplayDate,
+  getTodayChicago,
+  playerImageUrl,
+  mlbPlayerUrl,
+} from "@/lib/utils";
+import DatePicker from "@/components/DatePicker";
+import PlayerGrid from "@/components/PlayerGrid";
+import InfoModal from "@/components/InfoModal";
+
+export interface HomeRunEvent {
+  topBottom: "Top" | "Bot";
+  inning: string;
+  runsScored: string;
+  exitVelo: number | null;
+  launchAngle: number | null;
+  distance: number | null;
+  hardness: string | null;
+  pitchType: string | null;
+  pitchSpeed: number | null;
+  coordX: number | null;
+  coordY: number | null;
+  captivatingIndex: number | null;
+  hrNumber: number | null;
+  isPlayoffs: boolean;
+  milestone: string | null;
+  venue: string;
+}
+
+const ROUND_MILESTONES = new Set([10, 20, 25, 30, 35, 40, 45, 50, 55]);
+
+function getMilestone(
+  hrNumber: number | null,
+  isPlayoffs: boolean,
+): string | null {
+  if (hrNumber !== null) {
+    // All-time records
+    if (hrNumber === 73) return "ties Bonds' all-time record (73)";
+    if (hrNumber === 70) return "ties McGwire's mark (70)";
+    if (hrNumber === 66) return "ties Sosa's 1998 mark (66)";
+    // Beyond Judge's AL record — historic PED-era only territory
+    if (hrNumber >= 63 && hrNumber < 66) return `HR #${hrNumber} — beyond Judge's AL record`;
+    // Judge's AL record
+    if (hrNumber === 62) return "breaks Judge/Maris AL record (62)";
+    // Maris
+    if (hrNumber === 61) return "ties Maris' record (61)";
+    // Ruth
+    if (hrNumber === 60) return "ties Ruth's record (60)";
+    // Postseason
+    if (isPlayoffs && hrNumber === 1) return "postseason debut";
+    // Season debut
+    if (!isPlayoffs && hrNumber === 1) return "1st HR of the season";
+    // Round numbers
+    if (ROUND_MILESTONES.has(hrNumber)) return `${hrNumber}th HR of the season`;
+  }
+  return null;
+}
+
+export interface PlayerStat {
+  name: string;
+  id: number;
+  team: string;
+  imageUrl: string;
+  mlbUrl: string;
+  homeRuns: HomeRunEvent[];
+}
+
+export const dynamic = "force-dynamic";
+
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ date?: string }>;
+}) {
+  const params = await searchParams;
+  const date = params.date ?? getTodayChicago();
+  const season = Number(date.slice(0, 4));
+
+  const [games, hrLeaders] = await Promise.all([
+    getSchedule(date),
+    getHRLeaders(season),
+  ]);
+
+  const playerMap = new Map<number, PlayerStat>();
+
+  const PLAYOFF_TYPES = new Set(["F", "D", "L", "W"]);
+  const VALID_GAME_TYPES = new Set(["R", "S", "F", "D", "L", "W"]);
+
+  for (const game of games) {
+    if (!VALID_GAME_TYPES.has(game.gameType)) continue;
+
+    const awayTeam = game.teams.away.team.name;
+    const homeTeam = game.teams.home.team.name;
+    const venue = game.venue?.name ?? "";
+    const isPlayoffs = PLAYOFF_TYPES.has(game.gameType);
+
+    const plays: Play[] = await getPlayByPlay(game.gamePk);
+
+    for (const play of plays) {
+      if (play.result?.eventType !== "home_run") continue;
+
+      const { fullName: name, id } = play.matchup.batter;
+      const { inning, isTopInning } = play.about;
+      const topBottom = isTopInning ? ("Top" as const) : ("Bot" as const);
+      const team = topBottom === "Top" ? awayTeam : homeTeam;
+
+      // Extract hit data from playEvents (read directly — no regex needed)
+      let exitVelo: number | null = null;
+      let launchAngle: number | null = null;
+      let distance: number | null = null;
+      let hardness: string | null = null;
+      let coordX: number | null = null;
+      let coordY: number | null = null;
+      let pitchType: string | null = null;
+      let pitchSpeed: number | null = null;
+      for (const event of play.playEvents) {
+        if (event.hitData) {
+          exitVelo = event.hitData.launchSpeed ?? null;
+          launchAngle = event.hitData.launchAngle ?? null;
+          distance = event.hitData.totalDistance ?? null;
+          hardness = event.hitData.hardness ?? null;
+          coordX = event.hitData.coordinates?.coordX ?? null;
+          coordY = event.hitData.coordinates?.coordY ?? null;
+          pitchType = event.details?.type?.description ?? null;
+          pitchSpeed = event.pitchData?.startSpeed ? Math.round(event.pitchData.startSpeed) : null;
+          break;
+        }
+      }
+      const captivatingIndex = play.about.captivatingIndex ?? null;
+
+      const hrNumberMatch = play.result.description?.match(/\((\d+)\)/);
+      const hrNumber = hrNumberMatch ? Number(hrNumberMatch[1]) : null;
+
+      const rbi = play.result.rbi;
+      const runsScored = rbi === 1 ? "Solo" : rbi === 4 ? "Grand Slam" : `${rbi} run`;
+
+      const milestone = getMilestone(hrNumber, isPlayoffs);
+
+      const hrEvent: HomeRunEvent = {
+        topBottom,
+        inning: addSuffix(inning),
+        runsScored,
+        exitVelo,
+        launchAngle,
+        distance,
+        hardness,
+        pitchType,
+        pitchSpeed,
+        coordX,
+        coordY,
+        captivatingIndex,
+        hrNumber,
+        isPlayoffs,
+        milestone,
+        venue,
+      };
+
+      if (playerMap.has(id)) {
+        playerMap.get(id)!.homeRuns.push(hrEvent);
+      } else {
+        playerMap.set(id, {
+          name,
+          id,
+          team,
+          imageUrl: playerImageUrl(id),
+          mlbUrl: mlbPlayerUrl(id),
+          homeRuns: [hrEvent],
+        });
+      }
+    }
+  }
+
+  const players = Array.from(playerMap.values());
+  const totalHRs = players.reduce((sum, p) => sum + p.homeRuns.length, 0);
+  const displayDate = formatDisplayDate(date);
+  const isToday = date === getTodayChicago();
+  const isSpringTraining = games.some((g) => g.gameType === "S");
+
+  return (
+    <main className="min-h-screen bg-zinc-950 text-zinc-100 font-mono">
+      <div className="max-w-5xl mx-auto px-4 py-10">
+        {/* Header */}
+        <header className="mb-10 text-center">
+          <h1 className="text-2xl font-bold tracking-tight mb-1">
+            {isToday ? (
+              <>
+                who hit a homerun{" "}
+                <span className="underline underline-offset-4 decoration-zinc-600">today</span>?
+              </>
+            ) : (
+              <>
+                who hit a homerun on{" "}
+                <span className="underline underline-offset-4 decoration-zinc-600">{displayDate}</span>?
+              </>
+            )}
+          </h1>
+          {isSpringTraining && (
+            <p className="text-zinc-500 text-xs mt-2 tracking-widest uppercase">spring training</p>
+          )}
+          {!isSpringTraining && games.some((g) => PLAYOFF_TYPES.has(g.gameType)) && (
+            <p className="text-zinc-500 text-xs mt-2 tracking-widest uppercase">postseason</p>
+          )}
+          <div className="mt-4">
+            <DatePicker currentDate={date} />
+          </div>
+          <div className="mt-3">
+            <InfoModal />
+          </div>
+        </header>
+
+        {/* Player grid + sort */}
+        {players.length === 0 ? (
+          <p className="text-center text-zinc-500 text-lg mt-20">
+            no one&hellip;yet
+          </p>
+        ) : (
+          <PlayerGrid players={players} totalHRs={totalHRs} />
+        )}
+
+        {/* HR Leaders sidebar section */}
+        {hrLeaders.length > 0 && (
+          <section className="mt-16 border-t border-zinc-800 pt-8">
+            <h2 className="text-xs uppercase tracking-widest text-zinc-500 mb-4">
+              {season} HR Leaders
+            </h2>
+            <ol className="space-y-2">
+              {hrLeaders.map((leader) => (
+                <li
+                  key={leader.person.id}
+                  className="flex items-center justify-between text-sm"
+                >
+                  <span className="text-zinc-500 w-6">{leader.rank}.</span>
+                  <span className="flex-1 text-zinc-200">{leader.person.fullName}</span>
+                  <span className="text-zinc-500 text-xs">{leader.team.name}</span>
+                  <span className="text-zinc-100 font-bold ml-4 w-8 text-right">
+                    {leader.value}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
+      </div>
+
+      <footer className="text-center text-zinc-700 text-xs py-8">
+        <p>
+          data via{" "}
+          <a
+            href="https://statsapi.mlb.com"
+            target="_blank"
+            rel="noreferrer"
+            className="hover:text-zinc-500 transition-colors"
+          >
+            MLB Stats API
+          </a>
+        </p>
+        <p className="mt-1">
+          <a
+            href="https://github.com/blakemartinez/who-hit-a-homerun-today"
+            target="_blank"
+            rel="noreferrer"
+            className="hover:text-zinc-500 transition-colors"
+          >
+            2026 Blake Martinez
+          </a>
+        </p>
+      </footer>
+    </main>
+  );
+}
