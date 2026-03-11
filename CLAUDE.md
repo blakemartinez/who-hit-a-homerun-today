@@ -5,28 +5,57 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-pip install -r requirements.txt
-python app.py          # Dev server on port 5001
+npm install
+npm run dev    # Dev server on http://localhost:3000
+npm run build  # Production build — run this before pushing to verify no type errors
+npm run lint
 ```
 
-Deployed to Vercel via `vercel.json` using `@vercel/python`.
+**Important:** Always `rm -rf .next` before running `npm run dev` after a production build. Running both simultaneously corrupts the `.next` cache.
+
+## Deploying
+
+Deployed automatically to Vercel on push to `master`. Before pushing, verify:
+1. `npm run build` passes with no type errors
+2. Test the deployed Vercel URL after pushing to confirm the deployment succeeded
 
 ## Architecture
 
-Single-file Flask app (`app.py`) with one route (`GET/POST /`).
+Next.js 15 App Router, TypeScript, Tailwind CSS.
 
 **Data flow:**
-1. On load, defaults to today's date in America/Chicago timezone; POST with `customDate` overrides it
-2. Fetches all games for that date via `statsapi.schedule()`
-3. For each game, fetches full play-by-play via `statsapi.get("game_playByPlay", ...)`
-4. Filters plays where `result.eventType == 'home_run'`, extracts distance/exit velo via regex on the `playEvents` string
-5. Deduplicates player lookups — if a batter already appears in `home_runs_by_player`, reuses cached data to skip an API call
-6. Uses team logo from `mlb_team_logos` dict as the player image (player image scraping via BeautifulSoup/Google is implemented but commented out due to load time)
-7. Fetches season HR leaders via `statsapi.league_leader_data('homeruns', limit=5)`
-8. Renders `templates/index.html` with Jinja2
+1. `app/page.tsx` — async server component, reads `searchParams.date` (defaults to today in America/Chicago)
+2. Fetches schedule + HR leaders in parallel via `lib/mlb.ts`
+3. For each valid game (R/S/F/D/L/W types), fetches play-by-play and filters `home_run` events
+4. Builds `Map<number, PlayerStat>` keyed by player ID to deduplicate multi-HR games
+5. Passes `players` array to `<PlayerGrid>` (client component for sorting) and `<PlayerCard>` (per player)
 
-**`home_runs_by_player` structure:** `{ player_name: [(top_bottom, inning_with_suffix, runs_scored, batter_url, batter_image_url, homerun_number, current_team, launchSpeed, distance), ...] }`
+**Key files:**
+- `lib/mlb.ts` — typed fetch wrappers for MLB Stats API (no key required)
+- `lib/utils.ts` — `addSuffix`, `formatDisplayDate`, `getTodayChicago`, `playerImageUrl`, `mlbPlayerUrl`
+- `app/page.tsx` — data fetching, `getMilestone()`, `HomeRunEvent` / `PlayerStat` interfaces
+- `components/PlayerCard.tsx` — card with multi-border system, HR rows, inline stats
+- `components/PlayerGrid.tsx` — client sort bar + active legend
+- `components/HRTrajectory.tsx` — perspective SVG trajectory visualization
+- `components/HRLoadingAnim.tsx` — looping ball animation used in loading state
+- `components/DatePicker.tsx` — client date input with prev/next arrows and `useTransition` overlay
+- `components/InfoModal.tsx` — "what is this?" modal
 
-**Template:** `templates/index.html` — player cards are clickable (JS sets `data-url` to MLB search URL). Styling in `static/styles.css`.
+**Card border system** (priority order):
+- Emerald: milestone HR (records, round numbers, season/postseason debut)
+- Red: moonshot 450+ ft
+- Yellow: scorcher 110+ mph exit velo
+- Purple: multi-HR game
+- Blue: clutch captivating index 80+
 
-**Known issue:** When a batter already exists in `home_runs_by_player`, the code mistakenly reads `home_runs_by_player[batter][0]` (a tuple) for `current_team`, `batter_url`, and `batter_image_url` instead of the correct indexed fields.
+Cards support up to 3 visible borders via `border` + `ring` + `outline`.
+
+## Commits
+
+Always include this co-author trailer:
+
+```
+Co-Authored-By: Blake's Claude Minion <blakes-claude-minion@noreply.local>
+```
+
+Before committing, do a staff engineer review: check for correctness, type safety, style consistency, and obvious bugs.
