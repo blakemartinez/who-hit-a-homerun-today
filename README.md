@@ -8,7 +8,17 @@ I just really like baseball and I really like numbers. This was supposed to be a
 
 Pick any date, see who went yard. Each card is a player who homered that day. Click a row to expand it and you get a small trajectory view — launch angle, exit velo, distance, where it landed.
 
-The border colors mean things. Emerald is a milestone (record-tying, 30th or 50th of the season, season debut, postseason debut). Red is a moonshot, 450+ feet. Yellow is a scorcher, 110+ mph exit velo. Purple means they hit more than one that day. Blue is clutch — MLB has an internal captivating index, and 80+ qualifies. Cards can have more than one border if they hit multiple thresholds.
+The border colors mean things:
+
+| color | what it means |
+|-------|--------------|
+| 🟢 emerald | milestone — record-tying, 30th/50th of the season, season debut, postseason debut |
+| 🔴 red | moonshot — 450+ feet |
+| 🟡 yellow | scorcher — 110+ mph exit velo |
+| 🟣 purple | multi-HR game |
+| 🔵 blue | clutch — MLB's captivating index 80+ |
+
+Cards can have more than one border if they hit multiple thresholds.
 
 ## tech
 
