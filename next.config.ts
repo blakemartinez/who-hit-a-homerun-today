@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
-        source: "/drive-into-deep-left-field",
+        source: "/a-drive-into-deep-left-field-by-castellanos",
         destination: "/?date=2020-08-19",
         permanent: false,
       },
