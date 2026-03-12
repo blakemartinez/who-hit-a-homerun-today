@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import HRLoadingAnim from "./HRLoadingAnim";
 import { playerImageUrl } from "@/lib/utils";
 
-type Phase = "intro" | "apology" | "hr_call" | "homerun" | "punchline";
+type Phase = "intro" | "apology" | "smash" | "hr_call" | "homerun" | "punchline";
 
 // Thom's apology before the pivot
 const APOLOGY_WORDS: { text: string; hold: number }[] = [
@@ -347,6 +347,13 @@ export default function CastellanosEasterEgg() {
     return () => clearTimeout(t);
   }, [phase]);
 
+  // smash → hr_call
+  useEffect(() => {
+    if (phase !== "smash") return;
+    const t = setTimeout(() => setPhase("hr_call"), 900);
+    return () => clearTimeout(t);
+  }, [phase]);
+
   // homerun → punchline
   useEffect(() => {
     if (phase !== "homerun") return;
@@ -354,7 +361,7 @@ export default function CastellanosEasterEgg() {
     return () => clearTimeout(t);
   }, [phase]);
 
-  const apologyIdx = useKaraoke(APOLOGY_WORDS, phase === "apology", () => setPhase("hr_call"));
+  const apologyIdx = useKaraoke(APOLOGY_WORDS, phase === "apology", () => setPhase("smash"));
   const hrIdx      = useKaraoke(HR_WORDS,      phase === "hr_call",  () => setPhase("homerun"));
 
   if (dismissed) return null;
@@ -384,10 +391,22 @@ export default function CastellanosEasterEgg() {
           </div>
         )}
 
-        {/* ── HR CALL KARAOKE (ball animation above) ── */}
+        {/* ── SMASH ───────────────────────────────── */}
+        {phase === "smash" && (
+          <p className="text-8xl sm:text-9xl font-black text-yellow-400 tracking-widest animate-bounce">
+            CRACK
+          </p>
+        )}
+
+        {/* ── HR CALL KARAOKE (Nick's face above) ─── */}
         {phase === "hr_call" && (
           <div className="w-full max-w-lg text-center flex flex-col items-center gap-6">
-            <HRLoadingAnim />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={playerImageUrl(592206)}
+              alt="Nick Castellanos"
+              className="w-24 h-24 rounded-full object-cover bg-zinc-800 border-2 border-zinc-700"
+            />
             <KaraokeText words={HR_WORDS} activeIdx={hrIdx} size="text-2xl sm:text-3xl" />
           </div>
         )}
