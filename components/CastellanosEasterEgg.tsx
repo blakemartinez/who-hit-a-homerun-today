@@ -163,9 +163,12 @@ function BrennаmanCard() {
     `}>
       {/* Header */}
       <div className="flex flex-col items-center mb-3">
-        <div className="w-20 h-20 rounded-full bg-zinc-800 border border-zinc-700 mb-2 flex items-center justify-center">
-          <span className="text-zinc-400 font-bold text-2xl">TB</span>
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="https://www.statesmanjournal.com/gcdn/presto/2020/08/20/PCIN/05e0c613-2286-4592-b077-5ad99bce932c-thumbnail.png?crop=980,552,x0,y0&width=980&height=552&format=pjpg&auto=webp"
+          alt="Thom Brennaman"
+          className="w-20 h-20 rounded-full object-cover object-top bg-zinc-800 border border-zinc-700 mb-2"
+        />
         <p className="text-zinc-100 font-bold text-sm text-center leading-tight">Thom Brennaman</p>
         <p className="text-zinc-500 text-xs mt-0.5">FOX Sports · Reds Broadcaster</p>
       </div>
