@@ -11,6 +11,7 @@ import DatePicker from "@/components/DatePicker";
 import PlayerGrid from "@/components/PlayerGrid";
 import InfoModal from "@/components/InfoModal";
 import CastellanosEasterEgg from "@/components/CastellanosEasterEgg";
+import ShareButton from "@/components/ShareButton";
 
 const CASTELLANOS_DATE = "2020-08-19";
 
@@ -209,7 +210,12 @@ export default async function Page({
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100 font-mono">
       {date === CASTELLANOS_DATE && <CastellanosEasterEgg />}
-      <div className="max-w-5xl mx-auto px-4 py-10">
+      <div className="max-w-5xl mx-auto px-4 py-10 relative">
+        {/* Share button — top right */}
+        <div className="absolute top-10 right-4">
+          <ShareButton date={date} isToday={isToday} />
+        </div>
+
         {/* Header */}
         <header className="mb-10 text-center">
           <h1 className="text-2xl font-bold tracking-tight mb-1">
