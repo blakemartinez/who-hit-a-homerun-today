@@ -403,9 +403,9 @@ export default function CastellanosEasterEgg() {
           <div className="w-full max-w-lg text-center flex flex-col items-center gap-6">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={playerImageUrl(592206)}
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Nicholas_Castellanos_warm_up_6.19.21_%28cropped%29.jpg/250px-Nicholas_Castellanos_warm_up_6.19.21_%28cropped%29.jpg"
               alt="Nick Castellanos"
-              className="w-24 h-24 rounded-full object-cover bg-zinc-800 border-2 border-zinc-700"
+              className="w-24 h-24 rounded-full object-cover object-top bg-zinc-800 border-2 border-zinc-700"
             />
             <KaraokeText words={HR_WORDS} activeIdx={hrIdx} size="text-2xl sm:text-3xl" />
           </div>
