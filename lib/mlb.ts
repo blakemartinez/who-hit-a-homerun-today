@@ -72,6 +72,92 @@ export async function getPlayByPlay(gamePk: number): Promise<Play[]> {
   return data.allPlays ?? [];
 }
 
+export interface PlayerInfo {
+  id: number;
+  fullName: string;
+  primaryPosition: { abbreviation: string };
+  batSide: { description: string };
+  currentTeam: { name: string };
+  birthDate?: string;
+  height?: string;
+  weight?: number;
+}
+
+export interface SeasonStats {
+  gamesPlayed: number;
+  atBats: number;
+  avg: string;
+  homeRuns: number;
+  rbi: number;
+  obp: string;
+  slg: string;
+  ops: string;
+  season: string;
+}
+
+export interface HRGameLogEntry {
+  date: string;         // "YYYY-MM-DD"
+  opponent: string;
+  isHome: boolean;
+  homeRuns: number;
+  rbi: number;
+  gamePk: number;
+}
+
+export async function getPlayerInfo(playerId: number): Promise<PlayerInfo | null> {
+  const res = await fetch(
+    `${MLB_API}/people/${playerId}?hydrate=currentTeam`,
+    { next: { revalidate: 3600 } }
+  );
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data.people?.[0] ?? null;
+}
+
+export async function getSeasonStats(playerId: number): Promise<SeasonStats | null> {
+  // Try current year, fall back to previous year
+  const currentYear = new Date().getFullYear();
+  for (const season of [currentYear, currentYear - 1]) {
+    const res = await fetch(
+      `${MLB_API}/people/${playerId}/stats?stats=statsSingleSeason&group=hitting&season=${season}&sportId=1`,
+      { next: { revalidate: 3600 } }
+    );
+    if (!res.ok) continue;
+    const data = await res.json();
+    const split = data.stats?.[0]?.splits?.[0];
+    if (split?.stat?.gamesPlayed > 0) {
+      return { ...split.stat, season: String(season) };
+    }
+  }
+  return null;
+}
+
+export async function getHRGameLog(playerId: number): Promise<HRGameLogEntry[]> {
+  const currentYear = new Date().getFullYear();
+  for (const season of [currentYear, currentYear - 1]) {
+    const res = await fetch(
+      `${MLB_API}/people/${playerId}/stats?stats=gameLog&group=hitting&season=${season}&sportId=1`,
+      { next: { revalidate: 3600 } }
+    );
+    if (!res.ok) continue;
+    const data = await res.json();
+    type RawSplit = Record<string, unknown>;
+    const splits: HRGameLogEntry[] = (data.stats?.[0]?.splits ?? [])
+      .filter((s: RawSplit) => ((s.stat as RawSplit)?.homeRuns as number) > 0)
+      .map((s: RawSplit) => ({
+        date: s.date as string,
+        opponent: (s.opponent as Record<string, unknown>)?.name ?? "Unknown",
+        isHome: !s.isHome, // API uses isHome: false = away, invert
+        homeRuns: (s.stat as Record<string, unknown>)?.homeRuns as number,
+        rbi: (s.stat as Record<string, unknown>)?.rbi as number,
+        gamePk: (s.game as Record<string, unknown>)?.gamePk as number,
+      }))
+      .reverse(); // most recent first
+    if (splits.length > 0) return splits;
+  }
+  return [];
+}
+
 export async function getHRLeaders(season: number): Promise<HRLeader[]> {
   const res = await fetch(
     `${MLB_API}/stats/leaders?leaderCategories=homeRuns&season=${season}&limit=5&sportId=1`,

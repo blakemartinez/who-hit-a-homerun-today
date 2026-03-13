@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import type { PlayerStat, HomeRunEvent } from "@/app/page";
 import HRTrajectory from "@/components/HRTrajectory";
 
@@ -192,11 +193,9 @@ export default function PlayerCard({ player }: { player: PlayerStat }) {
 
   return (
     <div className={`bg-zinc-900 border-2 rounded-lg p-4 ${borderClass} ${ringClass} ${outlineClass}`}>
-      {/* Headshot + name (link to MLB profile) */}
-      <a
-        href={player.mlbUrl}
-        target="_blank"
-        rel="noreferrer"
+      {/* Headshot + name (link to player profile) */}
+      <Link
+        href={`/player/${player.id}`}
         className="flex flex-col items-center mb-3 group"
       >
         <div className="w-20 h-20 rounded-full overflow-hidden bg-zinc-800 border border-zinc-700 mb-2 flex-shrink-0">
@@ -213,7 +212,7 @@ export default function PlayerCard({ player }: { player: PlayerStat }) {
           {player.name}
         </p>
         <p className="text-zinc-500 text-xs mt-0.5">{player.team}</p>
-      </a>
+      </Link>
 
       <div className="border-t border-zinc-800 mb-3" />
 
