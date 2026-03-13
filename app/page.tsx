@@ -210,12 +210,7 @@ export default async function Page({
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100 font-mono">
       {date === CASTELLANOS_DATE && <CastellanosEasterEgg />}
-      <div className="max-w-5xl mx-auto px-4 py-10 relative">
-        {/* Share button — top right */}
-        <div className="absolute top-10 right-4">
-          <ShareButton date={date} isToday={isToday} />
-        </div>
-
+      <div className="max-w-5xl mx-auto px-4 py-10">
         {/* Header */}
         <header className="mb-10 text-center">
           <h1 className="text-2xl font-bold tracking-tight mb-1">
@@ -240,8 +235,10 @@ export default async function Page({
           <div className="mt-4">
             <DatePicker currentDate={date} />
           </div>
-          <div className="mt-3">
+          <div className="mt-3 flex items-center justify-center gap-4">
             <InfoModal />
+            <span className="text-zinc-700 text-xs">·</span>
+            <ShareButton date={date} isToday={isToday} />
           </div>
         </header>
 
