@@ -37,15 +37,8 @@ const SEGMENT_COLORS = [
 function ExcitementBar({ score }: { score: number }) {
   const filled = Math.round(score / 10);
   return (
-    <div className="flex items-center gap-1.5 mt-2 mb-1">
-      <div className="relative group w-16 shrink-0">
-        <span className="text-zinc-600 text-xs cursor-default">
-          excitement <span className="text-zinc-700">?</span>
-        </span>
-        <div className="pointer-events-none absolute bottom-full left-0 mb-1.5 hidden group-hover:block z-10 w-52 rounded bg-zinc-800 border border-zinc-700 px-2.5 py-1.5 text-xs text-zinc-300 leading-snug">
-          MLB&apos;s captivating index — a 0–100 score rating how exciting this play was in context of the game.
-        </div>
-      </div>
+    <div className="flex items-center gap-2 mt-2 mb-1">
+      <span className="text-zinc-600 text-xs shrink-0">excitement</span>
       <div className="flex gap-px">
         {Array.from({ length: 10 }, (_, i) => (
           <div
@@ -54,7 +47,13 @@ function ExcitementBar({ score }: { score: number }) {
           />
         ))}
       </div>
-      <span className="text-zinc-600 text-xs">{score}</span>
+      <span className="text-zinc-500 text-xs tabular-nums">{score}</span>
+      <div className="relative group shrink-0">
+        <span className="text-zinc-700 text-xs border border-zinc-700 rounded-full w-3.5 h-3.5 inline-flex items-center justify-center cursor-default leading-none">?</span>
+        <div className="pointer-events-none absolute bottom-full left-0 mb-1.5 hidden group-hover:block z-10 w-52 rounded bg-zinc-800 border border-zinc-700 px-2.5 py-1.5 text-xs text-zinc-300 leading-snug">
+          MLB&apos;s captivating index — 0–100 score for how exciting this play was in game context.
+        </div>
+      </div>
     </div>
   );
 }

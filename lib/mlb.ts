@@ -79,6 +79,7 @@ export interface PlayerInfo {
   batSide: { description: string };
   currentTeam: { name: string };
   birthDate?: string;
+  mlbDebutDate?: string;  // "YYYY-MM-DD"
   height?: string;
   weight?: number;
 }
@@ -114,27 +115,29 @@ export async function getPlayerInfo(playerId: number): Promise<PlayerInfo | null
   return data.people?.[0] ?? null;
 }
 
-export async function getSeasonStats(playerId: number): Promise<SeasonStats | null> {
-  // Try current year, fall back to previous year
+export async function getSeasonStats(playerId: number, season?: number): Promise<SeasonStats | null> {
   const currentYear = new Date().getFullYear();
-  for (const season of [currentYear, currentYear - 1]) {
+  // If a specific season is requested, only try that year; otherwise auto-detect
+  const seasons = season ? [season] : [currentYear, currentYear - 1];
+  for (const s of seasons) {
     const res = await fetch(
-      `${MLB_API}/people/${playerId}/stats?stats=statsSingleSeason&group=hitting&season=${season}&sportId=1`,
+      `${MLB_API}/people/${playerId}/stats?stats=statsSingleSeason&group=hitting&season=${s}&sportId=1`,
       { next: { revalidate: 3600 } }
     );
     if (!res.ok) continue;
     const data = await res.json();
     const split = data.stats?.[0]?.splits?.[0];
     if (split?.stat?.gamesPlayed > 0) {
-      return { ...split.stat, season: String(season) };
+      return { ...split.stat, season: String(s) };
     }
   }
   return null;
 }
 
-export async function getHRGameLog(playerId: number): Promise<HRGameLogEntry[]> {
+export async function getHRGameLog(playerId: number, season?: number): Promise<HRGameLogEntry[]> {
   const currentYear = new Date().getFullYear();
-  for (const season of [currentYear, currentYear - 1]) {
+  const seasons = season ? [season] : [currentYear, currentYear - 1];
+  for (const season of seasons) {
     const res = await fetch(
       `${MLB_API}/people/${playerId}/stats?stats=gameLog&group=hitting&season=${season}&sportId=1`,
       { next: { revalidate: 3600 } }
@@ -156,6 +159,67 @@ export async function getHRGameLog(playerId: number): Promise<HRGameLogEntry[]> 
     if (splits.length > 0) return splits;
   }
   return [];
+}
+
+export interface PlayerHRDetail {
+  date: string;
+  opponent: string;
+  isHome: boolean;
+  gamePk: number;
+  inning: number;
+  isTopInning: boolean;
+  rbi: number;
+  captivatingIndex: number | null;
+  coordX: number | null;
+  coordY: number | null;
+  distance: number | null;
+  exitVelo: number | null;
+  launchAngle: number | null;
+  pitchType: string | null;
+  pitchSpeed: number | null;
+}
+
+export async function getPlayerHRDetails(
+  playerId: number,
+  games: HRGameLogEntry[]
+): Promise<PlayerHRDetail[]> {
+  const results = await Promise.all(
+    games.map(async (game) => {
+      const plays = await getPlayByPlay(game.gamePk);
+      return plays
+        .filter(
+          (p) =>
+            p.result.eventType === "home_run" &&
+            p.matchup.batter.id === playerId
+        )
+        .map((p) => {
+          const hitEvent = p.playEvents.find((e) => e.hitData);
+          // Last pitch event = the pitch that was hit
+          const pitchEvent = p.playEvents.findLast?.((e) => e.details?.type?.description)
+            ?? [...p.playEvents].reverse().find((e) => e.details?.type?.description);
+          return {
+            date: game.date,
+            opponent: game.opponent,
+            isHome: game.isHome,
+            gamePk: game.gamePk,
+            inning: p.about.inning,
+            isTopInning: p.about.isTopInning,
+            rbi: p.result.rbi,
+            captivatingIndex: p.about.captivatingIndex ?? null,
+            coordX: hitEvent?.hitData?.coordinates?.coordX ?? null,
+            coordY: hitEvent?.hitData?.coordinates?.coordY ?? null,
+            distance: hitEvent?.hitData?.totalDistance ?? null,
+            exitVelo: hitEvent?.hitData?.launchSpeed ?? null,
+            launchAngle: hitEvent?.hitData?.launchAngle ?? null,
+            pitchType: pitchEvent?.details?.type?.description ?? null,
+            pitchSpeed: pitchEvent?.pitchData?.startSpeed
+              ? Math.round(pitchEvent.pitchData.startSpeed)
+              : null,
+          };
+        });
+    })
+  );
+  return results.flat();
 }
 
 export async function getHRLeaders(season: number): Promise<HRLeader[]> {

@@ -119,9 +119,10 @@ export default function HRTrajectory({ launchAngle, distance, exitVelo, venue, i
             dur="1s" begin="0.05s" fill="freeze" />
         </path>
 
-        {/* Ball */}
-        <circle r="3.5" fill="#e4e4e7" opacity="0">
-          <animate attributeName="opacity" values="0;1" dur="0.01s" begin="0.05s" fill="freeze" />
+        {/* Ball — fades out just before landing so the landing dot takes over */}
+        <circle r="3.5" fill="#e4e4e7" cx={HOME.x} cy={HOME.y} opacity="0">
+          <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.05;0.82;1"
+            dur="1s" begin="0.05s" fill="freeze" />
           <animateMotion dur="1s" begin="0.05s" fill="freeze">
             <mpath href={`#${pathId}`} />
           </animateMotion>

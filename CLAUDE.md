@@ -13,11 +13,20 @@ npm run lint
 
 **Important:** Always `rm -rf .next` before running `npm run dev` after a production build. Running both simultaneously corrupts the `.next` cache.
 
+**When `npm run dev` is running in the background:** Do NOT run `npm run build` — it will corrupt the `.next` cache and require killing dev + `rm -rf .next` to recover. Instead:
+- Type-check only: `npx tsc --noEmit` (safe, doesn't touch `.next`)
+- Lint only: `npm run lint`
+- For a full build check, stop the background dev task first, then `rm -rf .next && npm run build`, then restart dev.
+
 ## Deploying
 
-Deployed automatically to Vercel on push to `master`. Before pushing, verify:
-1. `npm run build` passes with no type errors
-2. Test the deployed Vercel URL after pushing to confirm the deployment succeeded
+Vercel is connected to the repo and auto-deploys on push to `master` — no manual deploy needed.
+
+**Before committing and pushing:**
+1. Stop the background dev task if running
+2. `rm -rf .next && npm run build` — must pass with no type errors
+3. `vercel build` — verify the Vercel build also passes locally
+4. Once both pass, commit and push; Vercel handles the rest automatically
 
 ## Architecture
 

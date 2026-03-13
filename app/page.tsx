@@ -12,6 +12,7 @@ import PlayerGrid from "@/components/PlayerGrid";
 import InfoModal from "@/components/InfoModal";
 import CastellanosEasterEgg from "@/components/CastellanosEasterEgg";
 import ShareButton from "@/components/ShareButton";
+import EmptyState from "@/components/EmptyState";
 
 const CASTELLANOS_DATE = "2020-08-19";
 
@@ -244,9 +245,7 @@ export default async function Page({
 
         {/* Player grid + sort */}
         {players.length === 0 ? (
-          <p className="text-center text-zinc-500 text-lg mt-20">
-            no one&hellip;yet
-          </p>
+          <EmptyState date={date} isToday={isToday} todayDate={getTodayChicago()} />
         ) : (
           <PlayerGrid players={players} totalHRs={totalHRs} />
         )}

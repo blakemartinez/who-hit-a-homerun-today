@@ -35,7 +35,13 @@ export default function InfoModal() {
                 I just really like baseball and I really like visualizations.
               </p>
               <p className="text-zinc-500 text-xs leading-relaxed">
-                This started as a quick weekend thing and kind of got out of hand. A tool to see who hit home runs on any given day — pick a date, see who went yard. Each card is a player who homered that day. Click a row to expand it and you&apos;ll get a trajectory view with launch angle, exit velo, distance, and where it landed.
+                This started as a quick weekend thing and kind of got out of hand. Pick any date, see who went yard. Each card is a player who homered that day. Expand a row and you get the trajectory view — launch angle, exit velo, distance, where it landed.
+              </p>
+              <p className="text-zinc-500 text-xs leading-relaxed">
+                Click a player&apos;s name or photo to open their profile: season stats, a spray map of HR landing spots, and a flipper you can page through game by game. Each HR shows the pitch, ball metrics, and MLB&apos;s excitement score. The season picker goes back to their debut year.
+              </p>
+              <p className="text-zinc-500 text-xs leading-relaxed">
+                ⌘K or the search icon in the corner finds any player — active or retired.
               </p>
             </div>
 
@@ -64,15 +70,6 @@ export default function InfoModal() {
                 </li>
               </ul>
               <p className="mt-2">cards can have more than one border if they hit multiple thresholds.</p>
-            </div>
-
-            <div className="border-t border-zinc-800 pt-4">
-              <p className="text-zinc-300 mb-2">coming soon:</p>
-              <ul className="space-y-1 text-zinc-500">
-                <li>pitch metrics — spin rate, pitch type, velocity</li>
-                <li>pitcher breakdown for each HR given up</li>
-                <li>player profiles — career HR history, spray charts, launch angle trends, and per-season breakdowns for any player</li>
-              </ul>
             </div>
 
             <div className="border-t border-zinc-800 pt-4 space-y-2">

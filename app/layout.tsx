@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import PlayerSearch from "@/components/PlayerSearch";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://homeruntoday.vercel.app"),
@@ -39,7 +40,10 @@ export default function RootLayout({
       <head>
         <meta name="theme-color" content="#0a0a0a" />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <PlayerSearch />
+      </body>
     </html>
   );
 }
