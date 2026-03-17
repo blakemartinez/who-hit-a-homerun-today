@@ -115,7 +115,7 @@ export default function HRSprayMap({
       </svg>
 
       {/* Legend */}
-      <div className="flex justify-center gap-4 mt-1">
+      <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 mt-1">
         <span className="flex items-center gap-1 text-xs text-zinc-600">
           <span className="w-2 h-2 rounded-full bg-zinc-400 inline-block" />
           HR

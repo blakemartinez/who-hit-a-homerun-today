@@ -13,24 +13,28 @@ import InfoModal from "@/components/InfoModal";
 import CastellanosEasterEgg from "@/components/CastellanosEasterEgg";
 import ShareButton from "@/components/ShareButton";
 import EmptyState from "@/components/EmptyState";
+import SportToggle from "@/components/SportToggle";
 
 const CASTELLANOS_DATE = "2020-08-19";
 
 export async function generateMetadata({
   searchParams,
 }: {
-  searchParams: Promise<{ date?: string }>;
+  searchParams: Promise<{ date?: string; sport?: string }>;
 }): Promise<Metadata> {
   const params = await searchParams;
   const date = params.date ?? getTodayChicago();
+  const isWBC = params.sport === "wbc";
   const displayDate = formatDisplayDate(date);
   const isToday = date === getTodayChicago();
 
-  const title = isToday ? "Who Hit a Homerun Today?" : `Home Runs on ${displayDate}`;
+  const league = isWBC ? "WBC" : "MLB";
+  const title = isToday ? `Who Hit a Homerun Today? (${league})` : `${league} Home Runs on ${displayDate}`;
   const description = isToday
-    ? "Live MLB home run tracker — see every home run hit today with distance, exit velocity, launch angle, and pitch data."
-    : `MLB home runs hit on ${displayDate} — distance, exit velocity, launch angle, and pitch data for every home run.`;
-  const url = isToday ? "https://homeruntoday.vercel.app" : `https://homeruntoday.vercel.app/?date=${date}`;
+    ? `Live ${league} home run tracker — see every home run hit today with distance, exit velocity, launch angle, and pitch data.`
+    : `${league} home runs hit on ${displayDate} — distance, exit velocity, launch angle, and pitch data for every home run.`;
+  const sportParam = isWBC ? "&sport=wbc" : "";
+  const url = isToday ? `https://homeruntoday.vercel.app${isWBC ? "?sport=wbc" : ""}` : `https://homeruntoday.vercel.app/?date=${date}${sportParam}`;
 
   return {
     title,
@@ -102,15 +106,17 @@ export const dynamic = "force-dynamic";
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ date?: string }>;
+  searchParams: Promise<{ date?: string; sport?: string }>;
 }) {
   const params = await searchParams;
   const date = params.date ?? getTodayChicago();
+  const isWBC = params.sport === "wbc";
+  const sportId = isWBC ? 51 : 1;
   const season = Number(date.slice(0, 4));
 
   const [games, hrLeaders] = await Promise.all([
-    getSchedule(date),
-    getHRLeaders(season),
+    getSchedule(date, sportId),
+    isWBC ? Promise.resolve([]) : getHRLeaders(season),
   ]);
 
   const playerMap = new Map<number, PlayerStat>();
@@ -166,7 +172,7 @@ export default async function Page({
       const rbi = play.result.rbi;
       const runsScored = rbi === 1 ? "Solo" : rbi === 4 ? "Grand Slam" : `${rbi} run`;
 
-      const milestone = getMilestone(hrNumber, isPlayoffs);
+      const milestone = isWBC ? null : getMilestone(hrNumber, isPlayoffs);
 
       const hrEvent: HomeRunEvent = {
         topBottom,
@@ -227,14 +233,18 @@ export default async function Page({
               </>
             )}
           </h1>
-          {isSpringTraining && (
+          {isWBC && (
+            <p className="text-amber-500 text-xs mt-2 tracking-widest uppercase">world baseball classic</p>
+          )}
+          {!isWBC && isSpringTraining && (
             <p className="text-zinc-500 text-xs mt-2 tracking-widest uppercase">spring training</p>
           )}
-          {!isSpringTraining && games.some((g) => PLAYOFF_TYPES.has(g.gameType)) && (
+          {!isWBC && !isSpringTraining && games.some((g) => PLAYOFF_TYPES.has(g.gameType)) && (
             <p className="text-zinc-500 text-xs mt-2 tracking-widest uppercase">postseason</p>
           )}
-          <div className="mt-4">
-            <DatePicker currentDate={date} />
+          <div className="mt-4 flex flex-col items-center gap-3">
+            <SportToggle currentDate={date} sport={isWBC ? "wbc" : "mlb"} />
+            <DatePicker currentDate={date} sport={isWBC ? "wbc" : "mlb"} />
           </div>
           <div className="mt-3 flex items-center justify-center gap-4">
             <InfoModal />

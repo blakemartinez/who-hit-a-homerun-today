@@ -1,6 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTransition } from "react";
+import HRLoadingAnim from "@/components/HRLoadingAnim";
 
 export default function SeasonPicker({
   playerId,
@@ -12,18 +14,25 @@ export default function SeasonPicker({
   minYear?: number;
 }) {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const currentYear = new Date().getFullYear();
 
   function go(year: number) {
     if (year < minYear || year > currentYear) return;
     const params = year === currentYear ? "" : `?season=${year}`;
-    router.push(`/player/${playerId}${params}`);
+    startTransition(() => router.push(`/player/${playerId}${params}`));
   }
 
   const years: number[] = [];
   for (let y = currentYear; y >= minYear; y--) years.push(y);
 
   return (
+    <>
+      {isPending && (
+        <div className="fixed inset-0 bg-zinc-950/80 z-50 flex items-center justify-center">
+          <HRLoadingAnim />
+        </div>
+      )}
     <div className="flex items-center gap-2">
       <button
         onClick={() => go(season - 1)}
@@ -63,5 +72,6 @@ export default function SeasonPicker({
         →
       </button>
     </div>
+    </>
   );
 }

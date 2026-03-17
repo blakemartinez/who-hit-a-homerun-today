@@ -5,6 +5,8 @@ import Link from "next/link";
 import type { PlayerHRDetail, HRGameLogEntry } from "@/lib/mlb";
 import HRTrajectory from "@/components/HRTrajectory";
 import HRSprayMap from "@/components/HRSprayMap";
+import PitchZoneMap from "@/components/PitchZoneMap";
+import PitchTypeBreakdown from "@/components/PitchTypeBreakdown";
 import { addSuffix } from "@/lib/utils";
 
 // ── Flag system ───────────────────────────────────────────────────────────────
@@ -200,25 +202,52 @@ export default function HRFlipbook({
               aria-label="Previous game"
             >←</button>
 
-            {/* One dot per game, colored by combined game flags */}
-            <div className="flex gap-1 items-center">
-              {groups.map((g, i) => {
-                const isActive = i === safeGameIdx;
-                const color = isActive
-                  ? "bg-zinc-200"
-                  : g.gameFlags.length > 0
-                  ? DOT_COLOR[g.gameFlags[0]]
-                  : "bg-zinc-700";
-                return (
-                  <button
-                    key={g.gamePk}
-                    onClick={() => goToGame(i)}
-                    className={`rounded-full transition-all ${isActive ? "w-2 h-2" : "w-1.5 h-1.5 hover:scale-125"} ${color}`}
-                    aria-label={`Game ${i + 1}`}
-                  />
-                );
-              })}
-            </div>
+            {/* One dot per game, colored by combined game flags — windowed to max 15 */}
+            {(() => {
+              const MAX = 15;
+              const total = groups.length;
+              let winStart = 0, winEnd = total;
+              if (total > MAX) {
+                const half = Math.floor(MAX / 2);
+                winStart = Math.max(0, Math.min(safeGameIdx - half, total - MAX));
+                winEnd = winStart + MAX;
+              }
+              return (
+                <div className="flex gap-1 items-center">
+                  {winStart > 0 && (
+                    <button
+                      onClick={() => goToGame(winStart - 1)}
+                      className="text-zinc-600 hover:text-zinc-400 text-xs tabular-nums leading-none transition-colors"
+                      aria-label={`${winStart} more games`}
+                    >+{winStart}</button>
+                  )}
+                  {groups.slice(winStart, winEnd).map((g, relI) => {
+                    const i = winStart + relI;
+                    const isActive = i === safeGameIdx;
+                    const color = isActive
+                      ? "bg-zinc-200"
+                      : g.gameFlags.length > 0
+                      ? DOT_COLOR[g.gameFlags[0]]
+                      : "bg-zinc-700";
+                    return (
+                      <button
+                        key={g.gamePk}
+                        onClick={() => goToGame(i)}
+                        className={`rounded-full transition-all ${isActive ? "w-2 h-2" : "w-1.5 h-1.5 hover:scale-125"} ${color}`}
+                        aria-label={`Game ${i + 1}`}
+                      />
+                    );
+                  })}
+                  {winEnd < total && (
+                    <button
+                      onClick={() => goToGame(winEnd)}
+                      className="text-zinc-600 hover:text-zinc-400 text-xs tabular-nums leading-none transition-colors"
+                      aria-label={`${total - winEnd} more games`}
+                    >+{total - winEnd}</button>
+                  )}
+                </div>
+              );
+            })()}
 
             <button
               onClick={() => goToGame(Math.min(groups.length - 1, safeGameIdx + 1))}
@@ -388,6 +417,25 @@ export default function HRFlipbook({
         </div>
 
       </div>
+
+      {/* ── Pitch row ── */}
+      {(hrs.some((h) => h.pitchX != null) || hrs.some((h) => h.pitchType != null)) && (
+        <div className="grid grid-cols-2 gap-2 mt-2">
+
+          {/* Pitch zone */}
+          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-2.5">
+            <p className="text-xs text-zinc-600 tracking-widest uppercase mb-2">zone</p>
+            <PitchZoneMap hrs={hrs} activeIdx={hr.flatIdx} />
+          </div>
+
+          {/* Pitch type breakdown */}
+          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-2.5">
+            <p className="text-xs text-zinc-600 tracking-widest uppercase mb-2">pitch types</p>
+            <PitchTypeBreakdown hrs={hrs} activePitchType={hr.pitchType} />
+          </div>
+
+        </div>
+      )}
     </div>
   );
 }

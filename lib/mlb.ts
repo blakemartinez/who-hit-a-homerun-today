@@ -23,7 +23,10 @@ interface HitData {
 export interface PlayEvent {
   hitData?: HitData;
   details?: { type?: { code?: string; description?: string } };
-  pitchData?: { startSpeed?: number };
+  pitchData?: {
+    startSpeed?: number;
+    coordinates?: { pX?: number; pZ?: number };
+  };
 }
 
 export interface Play {
@@ -52,9 +55,9 @@ export interface HRLeader {
 
 // --- Fetch helpers ---
 
-export async function getSchedule(date: string): Promise<ScheduleGame[]> {
+export async function getSchedule(date: string, sportId = 1): Promise<ScheduleGame[]> {
   const res = await fetch(
-    `${MLB_API}/schedule?sportId=1&date=${date}&hydrate=team,venue`,
+    `${MLB_API}/schedule?sportId=${sportId}&date=${date}&hydrate=team,venue`,
     { next: { revalidate: 60 } }
   );
   if (!res.ok) return [];
@@ -177,6 +180,8 @@ export interface PlayerHRDetail {
   launchAngle: number | null;
   pitchType: string | null;
   pitchSpeed: number | null;
+  pitchX: number | null;
+  pitchZ: number | null;
 }
 
 export async function getPlayerHRDetails(
@@ -215,6 +220,8 @@ export async function getPlayerHRDetails(
             pitchSpeed: pitchEvent?.pitchData?.startSpeed
               ? Math.round(pitchEvent.pitchData.startSpeed)
               : null,
+            pitchX: pitchEvent?.pitchData?.coordinates?.pX ?? null,
+            pitchZ: pitchEvent?.pitchData?.coordinates?.pZ ?? null,
           };
         });
     })

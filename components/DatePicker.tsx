@@ -5,14 +5,22 @@ import { useTransition, useState } from "react";
 import HRLoadingAnim from "@/components/HRLoadingAnim";
 import { formatDisplayDate, getTodayChicago } from "@/lib/utils";
 
-export default function DatePicker({ currentDate }: { currentDate: string }) {
+export default function DatePicker({
+  currentDate,
+  sport,
+}: {
+  currentDate: string;
+  sport?: "mlb" | "wbc";
+}) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [pendingDate, setPendingDate] = useState<string | null>(null);
 
   function navigate(date: string) {
     setPendingDate(date);
-    startTransition(() => router.push(`/?date=${date}`));
+    const params = new URLSearchParams({ date });
+    if (sport === "wbc") params.set("sport", "wbc");
+    startTransition(() => router.push(`/?${params.toString()}`));
   }
 
   const today = getTodayChicago();
