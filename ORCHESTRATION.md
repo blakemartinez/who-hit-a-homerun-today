@@ -29,7 +29,7 @@ See `.claude/prompts/mayor.md` and `.claude/prompts/worker.md` for full orchestr
 
 | ID | Title | Description |
 |----|-------|-------------|
-| — | — | No backlog items |
+| T009 | Daily HR Challenge (game revamp) | Revamp /game into a Wordle-style daily challenge. One HR per day (everyone gets the same one — pick the most interesting HR of the day by highest exit velo). Show cold stats only: exit velo, distance, launch angle, pitch type, inning, score context, venue. 3 guesses to name the player from a searchable list of all active MLB players. After each wrong guess reveal one hint: (1) team, (2) position + bats side. Show result as shareable emoji grid: ⬜⬜🟩. After solving, reveal the full trajectory visualization as a payoff. Remove trajectory graphic from the guessing phase entirely — it's a hint. Fix the current game's trajectory number overlap issue by not showing it during guessing. The "daily" is keyed to today's date in Chicago time (getTodayChicago()) — same HR for everyone that day. Persist guess state in localStorage keyed by date so refreshing doesn't reset. |
 
 ---
 
