@@ -12,11 +12,30 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const info = await getPlayerInfo(Number(id));
+  const playerId = Number(id);
+  const [info, stats] = await Promise.all([
+    getPlayerInfo(playerId),
+    getSeasonStats(playerId),
+  ]);
   const name = info?.fullName ?? "Player";
+  const team = info?.currentTeam?.name;
+  const season = stats ? Number(stats.season) : new Date().getFullYear();
+  const hr = stats?.homeRuns;
+
+  const title = hr != null && team
+    ? `${name} — ${hr} HR · ${team} · ${season} HR Profile`
+    : `${name} — HR Profile`;
+  const description = hr != null && team
+    ? `${name} hit ${hr} home runs in ${season} for the ${team}. View trajectory maps, exit velocity, pitch breakdown, and full game log.`
+    : `Home run stats and game log for ${name}.`;
+
+  const url = `https://homeruntoday.vercel.app/player/${playerId}`;
+
   return {
-    title: `${name} — HR Profile`,
-    description: `Home run stats and game log for ${name}.`,
+    title,
+    description,
+    openGraph: { title, description, url },
+    alternates: { canonical: url },
   };
 }
 
@@ -207,6 +226,21 @@ export default async function PlayerPage({
         </div>
 
       </div>
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Person",
+            name: info.fullName,
+            url: `https://homeruntoday.vercel.app/player/${playerId}`,
+            description: info.currentTeam?.name
+              ? `MLB player for the ${info.currentTeam.name}`
+              : "MLB player",
+          }),
+        }}
+      />
     </main>
   );
 }
