@@ -37,7 +37,7 @@ See `.claude/prompts/mayor.md` and `.claude/prompts/worker.md` for full orchestr
 | T001 | Season team on player page | https://github.com/blakemartinez/who-hit-a-homerun-today/pull/2 | ✅ |
 | T002 | SEO improvements | https://github.com/blakemartinez/who-hit-a-homerun-today/pull/3 | ✅ |
 | T003 | Update InfoModal | https://github.com/blakemartinez/who-hit-a-homerun-today/pull/4 | changes_requested |
-| T004 | Guess Who Hit It game | https://github.com/blakemartinez/who-hit-a-homerun-today/pull/5 | — |
+| T004 | Guess Who Hit It game | https://github.com/blakemartinez/who-hit-a-homerun-today/pull/5 | ✅ |
 
 ---
 
