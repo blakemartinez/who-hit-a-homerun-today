@@ -18,10 +18,7 @@ See `.claude/prompts/mayor.md` and `.claude/prompts/worker.md` for full orchestr
 
 | ID | Title | Status | Branch | PR | Depends On | Description |
 |----|-------|--------|--------|----|------------|-------------|
-| T001 | Season team on player page | in_progress | feat/T001-season-team | — | — | Show the team the player was on during the selected season, not always their current team |
-| T002 | SEO improvements | in_progress | feat/T002-seo | — | — | Date-specific page titles, richer player page metadata, JSON-LD on player pages |
-| T003 | Update InfoModal | in_progress | feat/T003-info-modal | — | — | Update "what is this?" copy to cover WBC mode, pitch zone map, pitch type breakdown |
-| T004 | Guess Who Hit It game | in_progress | feat/T004-guess-game | — | — | New /game page: show HR stats (no name), pick which player hit it from 4 options |
+| — | — | — | — | — | — | No active tasks |
 
 ---
 
@@ -37,7 +34,10 @@ See `.claude/prompts/mayor.md` and `.claude/prompts/worker.md` for full orchestr
 
 | ID | Title | PR | Merged |
 |----|-------|----|--------|
-| — | — | — | — |
+| T001 | Season team on player page | https://github.com/blakemartinez/who-hit-a-homerun-today/pull/2 | — |
+| T002 | SEO improvements | https://github.com/blakemartinez/who-hit-a-homerun-today/pull/3 | — |
+| T003 | Update InfoModal | https://github.com/blakemartinez/who-hit-a-homerun-today/pull/4 | — |
+| T004 | Guess Who Hit It game | https://github.com/blakemartinez/who-hit-a-homerun-today/pull/5 | — |
 
 ---
 
@@ -45,4 +45,4 @@ See `.claude/prompts/mayor.md` and `.claude/prompts/worker.md` for full orchestr
 
 | Date | Feature | Tasks | Outcome |
 |------|---------|-------|---------|
-| 2026-03-17 | Player team fix, SEO, InfoModal update, Guess game | T001–T004 | in progress |
+| 2026-03-17 | Player team fix, SEO, InfoModal update, Guess game | T001–T004 | PRs open |
