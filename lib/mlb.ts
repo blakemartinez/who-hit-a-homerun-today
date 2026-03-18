@@ -50,7 +50,23 @@ export interface HRLeader {
   rank: number;
   value: string;
   person: { fullName: string; id: number };
-  team: { name: string };
+  team: { id: number; name: string };
+}
+
+export interface ScheduleGameWithProbables {
+  gamePk: number;
+  gameType: string;
+  teams: {
+    away: {
+      team: { id: number; name: string };
+      probablePitcher?: { fullName: string };
+    };
+    home: {
+      team: { id: number; name: string };
+      probablePitcher?: { fullName: string };
+    };
+  };
+  venue: { name: string };
 }
 
 // --- Fetch helpers ---
@@ -233,6 +249,26 @@ export async function getPlayerHRDetails(
 export async function getHRLeaders(season: number): Promise<HRLeader[]> {
   const res = await fetch(
     `${MLB_API}/stats/leaders?leaderCategories=homeRuns&season=${season}&limit=5&sportId=1`,
+    { next: { revalidate: 3600 } }
+  );
+  if (!res.ok) return [];
+  const data = await res.json();
+  return data.leagueLeaders?.[0]?.leaders ?? [];
+}
+
+export async function getScheduleWithProbables(date: string): Promise<ScheduleGameWithProbables[]> {
+  const res = await fetch(
+    `${MLB_API}/schedule?sportId=1&date=${date}&hydrate=team,venue,probablePitcher`,
+    { next: { revalidate: 300 } }
+  );
+  if (!res.ok) return [];
+  const data = await res.json();
+  return data.dates?.[0]?.games ?? [];
+}
+
+export async function getHRLeadersWithTeam(season: number, limit = 50): Promise<HRLeader[]> {
+  const res = await fetch(
+    `${MLB_API}/stats/leaders?leaderCategories=homeRuns&season=${season}&limit=${limit}&sportId=1`,
     { next: { revalidate: 3600 } }
   );
   if (!res.ok) return [];
