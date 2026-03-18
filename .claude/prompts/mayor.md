@@ -45,18 +45,54 @@ For tasks with no unmet dependencies, spawn Worker Minion agents in parallel usi
 - Include the specific task ID and description in the prompt
 - Set their status to `in_progress` in ORCHESTRATION.md
 
+**IMPORTANT**: Mayor session must be on `master` with a clean working tree before spawning. If there are uncommitted changes, worktree creation may fail.
+
+## Step 4b: Spawn Watchdog
+
+Whenever spawning 2+ Worker Minions, also spawn a **Watchdog** agent alongside them to monitor for stuck or looping agents.
+
+**Watchdog behavior:**
+1. Every ~60 seconds, tail the last 20 lines of each agent's output file
+2. Detect loop patterns:
+   - Same error message appearing 3+ times
+   - Same tool called with identical input 3+ times
+   - No file writes or git commits after 20+ tool uses
+   - `permission denied` on a tool followed by repeated retries of the same tool
+3. On detection: kill the agent immediately using `TaskStop(task_id: "<agentId>")`
+4. Report to Mayor: which agent was stopped, what loop was detected, suggested fix
+
+**Spawn watchdog like this:**
+```
+You are a Watchdog monitoring Worker Minions for the who-hit-a-homerun-today project.
+
+Monitor these agents via their output files:
+- Agent <ID1>: <output_file_path>
+- Agent <ID2>: <output_file_path>
+
+Every 60 seconds, tail the last 20 lines of each output file.
+Stop any agent that is looping using TaskStop(task_id: "<agentId>").
+
+Loop detection rules:
+- Same error message 3+ times in a row
+- Same tool called with identical input 3+ times
+- 20+ tool uses with no git commits or file writes
+- permission denied followed by 2+ identical retries
+
+Report when all agents are done or stopped.
+```
+
 ## Step 5: Monitor and Handle Results
 
 When Worker Minions complete:
 - **Success**: collect PR URLs, then immediately spawn a Blake Review Minion for each PR (see Step 5b)
 - **Blocked**: read the blocker, decide: re-describe the task, fix the dependency, or split differently
-- **Failed**: assess whether to retry the same approach or rethink
+- **Stopped by Watchdog**: read the last 30 lines of the output file, rethink the task description, re-spawn with clearer more constrained prompt
 
 After independent tasks finish, check if any sequenced tasks are now unblocked and spawn them.
 
 ## Step 5b: Spawn Blake Review Minions
 
-For each successfully created PR, spawn a Blake Review Minion agent in parallel:
+For each successfully created PR, spawn a Blake Review Minion agent in parallel using **`model: "opus"`** (different model from the Worker Minion that wrote the code — cross-model review catches bugs same-model self-review misses):
 - Read `.claude/prompts/reviewer.md` for the full reviewer instructions
 - Pass the reviewer: PR number, original task description, branch name
 - The Blake Review Minion will read the diff, view the screenshot, and either **approve+merge** or **request changes** autonomously
@@ -68,7 +104,6 @@ You are the Blake Review Minion. Read .claude/prompts/reviewer.md for full instr
 PR number: <N>
 Branch: <branch>
 Original task: <paste the full task description from ORCHESTRATION.md>
-Screenshot is at: .github/pr-screenshots/pr-<N>.png on the branch
 ```
 
 Blake Review Minions run in parallel — spawn all at once, don't wait for one before starting the next.
@@ -92,14 +127,30 @@ Blocked tasks:
 - T005: <what's blocking it>
 ```
 
+## Step 7: Continuous Improvement
+
+After each wave completes, reflect on what worked and what didn't. Actively evolve the system:
+
+**Worker Minion prompt updates** — If minions repeatedly hit the same issue (missing context, wrong patterns, unclear boundaries), update `.claude/prompts/worker.md` to prevent it.
+
+**Mayor prompt updates** — If you notice orchestration bottlenecks (tasks too large, wrong dependencies, serial where parallel was possible), update this file with lessons learned.
+
+**ORCHESTRATION.md updates** — Refine backlog task descriptions based on what you learn. If a wave revealed that an interface needs a different shape, update dependent task descriptions before spawning.
+
+**CLAUDE.md updates** — As the codebase evolves, keep `CLAUDE.md` current with new components, conventions, and architecture decisions.
+
+Track improvements in the Session Log.
+
 ## Principles
 
 - **Minimize task scope** — smaller tasks = faster Worker Minions = easier reviews
 - **Fail fast** — if a Worker Minion hits a type error it can't solve, better to know early
+- **Stop loops early** — a Minion going in circles burns usage with no value; kill and re-brief
 - **Preserve master** — Worker Minions never push to master, only to feature branches
-- **State in git** — ORCHESTRATION.md is the source of truth; always commit updates
+- **State in git** — ORCHESTRATION.md is the source of truth; always commit updates; use `git pull --rebase` before pushing to avoid divergence from parallel minion pushes
 - **Quality gate** — Worker Minions must pass `tsc --noEmit` + `lint` before PR; never bypass
 - **Auto-merge** — Blake Review Minion merges approved PRs immediately; no manual step needed
+- **Cross-model review** — spawn Blake Review Minion with `model: "opus"` to catch what the implementing Sonnet model missed
 
 ## Task Status Values
 - `todo` — planned, not started

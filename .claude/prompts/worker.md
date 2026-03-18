@@ -12,6 +12,7 @@ Read your assigned task from `ORCHESTRATION.md`. Your task ID and description wi
 - Read `ORCHESTRATION.md` to find your task and understand its context
 - Read `CLAUDE.md` fully — follow all conventions there
 - Read relevant source files before touching anything
+- Check that any dependencies are already merged and available on master
 
 ### 2. Implement
 - Follow existing patterns: Next.js 15 App Router, TypeScript (strict), Tailwind CSS
@@ -27,7 +28,17 @@ npm run lint            # lint check
 ```
 Fix all errors before proceeding. Do not skip or suppress errors.
 
-### 4. Commit
+### 4. Self-review
+Before committing, do a **staff engineer review** of your own code. Check for:
+- **Correctness**: Does the logic actually do what the task describes?
+- **Type safety**: Are types precise? No unnecessary `any`, `as` casts, or `!` assertions?
+- **Style consistency**: Does this match the patterns in surrounding code?
+- **Obvious bugs**: Off-by-one errors, unhandled nulls, missing awaits, race conditions?
+- **Scope creep**: Any changes outside the task description? Remove them.
+
+Fix anything you find before proceeding.
+
+### 5. Commit
 ```bash
 git add <specific files>
 git commit -m "$(cat <<'EOF'
@@ -38,7 +49,7 @@ EOF
 )"
 ```
 
-### 5. Create PR
+### 6. Create PR
 Use a conventional commit prefix for the PR title:
 - `feat:` — new feature or page
 - `fix:` — bug fix
@@ -66,11 +77,11 @@ EOF
 )"
 ```
 
-### 6. Take a screenshot of your feature and add it to the PR
+### 7. Take a screenshot of your feature and add it to the PR
 
 This is a visual test artifact — screenshot the exact page or UI that your task changed, not just the homepage.
 
-**Step 6a — Determine the route to screenshot**
+**Step 7a — Determine the route to screenshot**
 
 Based on what you built, pick the most representative URL:
 - New page (e.g. `/game`, `/leaderboard`) → screenshot that page
@@ -78,7 +89,7 @@ Based on what you built, pick the most representative URL:
 - Main page changes → screenshot `/`
 - Component changes (card, modal, etc.) → screenshot the page the component appears on
 
-**Step 6b — Build and screenshot locally**
+**Step 7b — Build and screenshot locally**
 
 You are running inside a git worktree so a local build is safe — it won't affect the main repo's dev server or `.next` cache.
 
@@ -93,7 +104,7 @@ node /home/bmart32/code/who-hit-a-homerun-today/.claude/scripts/screenshot-local
 
 The script builds, starts the server, screenshots the route, then cleans up automatically.
 
-**Step 6c — Commit screenshot and add to PR description**
+**Step 7c — Commit screenshot and add to PR description**
 
 ```bash
 mkdir -p .github/pr-screenshots
@@ -112,19 +123,21 @@ gh pr edit <PR_NUM> --body "${CURRENT_BODY}
 ![Screenshot](${RAW_URL})"
 ```
 
-### 7. Update ORCHESTRATION.md
-After creating the PR, update your task row:
+### 8. Update ORCHESTRATION.md
+After creating the PR, update your task row on master:
 - Change `status` from `in_progress` → `done`
 - Add the PR URL in the `PR` column
-- Commit the ORCHESTRATION.md update on master (not the feature branch):
 
 ```bash
 git checkout master
+# Pull latest — other minions may have pushed to master in parallel
+git pull origin master --rebase 2>/dev/null || true
+# Edit ORCHESTRATION.md: update your task status and PR link
 git add ORCHESTRATION.md
 git commit -m "chore: mark task <TASK_ID> done [skip ci]
 
-Co-Authored-By: Blake's Claude Minion <blakes-claude-minion@noreply.local>
-"
+Co-Authored-By: Blake's Claude Minion <blakes-claude-minion@noreply.local>"
+git push
 ```
 
 ## Branch Naming
@@ -140,3 +153,5 @@ Co-Authored-By: Blake's Claude Minion <blakes-claude-minion@noreply.local>
 - Do not push to `master` directly
 - Do not modify files outside the scope of your task
 - Do not create new files unless clearly required
+- Do not add comments, docstrings, or type annotations to code you didn't write
+- Do not add error handling for scenarios that can't happen
