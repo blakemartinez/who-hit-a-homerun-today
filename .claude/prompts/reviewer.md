@@ -77,14 +77,16 @@ Then merge immediately:
 gh pr merge <PR_NUMBER> --squash --delete-branch
 ```
 
-Then update ORCHESTRATION.md on master — change status from `done` → `merged`:
+Then clean up the screenshot from master and update ORCHESTRATION.md:
 ```bash
 cd /home/bmart32/code/who-hit-a-homerun-today
 git checkout master
 git pull
+# Remove the screenshot that was squash-merged in (keeps master clean)
+git rm -f .github/pr-screenshots/pr-<PR_NUMBER>.png 2>/dev/null || true
 # Edit ORCHESTRATION.md: change status to `merged` and keep the PR link
-git add ORCHESTRATION.md
-git commit -m "chore: mark task <TASK_ID> merged [skip ci]
+git add -A
+git commit -m "chore: mark task <TASK_ID> merged, remove PR screenshot [skip ci]
 
 Co-Authored-By: Blake's Claude Minion <blakes-claude-minion@noreply.local>"
 git push
