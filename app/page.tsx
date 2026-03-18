@@ -297,6 +297,7 @@ export default async function Page({
             MLB Stats API
           </a>
         </p>
+        <p className="mt-1">not affiliated with MLB, its clubs, or any official entity.</p>
         <p className="mt-1">
           <a
             href="https://github.com/blakemartinez/who-hit-a-homerun-today"
