@@ -48,22 +48,45 @@ For tasks with no unmet dependencies, spawn worker agents in parallel using:
 ## Step 5: Monitor and Handle Results
 
 When workers complete:
-- **Success**: collect PR URLs, verify ORCHESTRATION.md was updated
+- **Success**: collect PR URLs, then immediately spawn a reviewer agent for each PR (see Step 5b)
 - **Blocked**: read the blocker, decide: re-describe the task, fix the dependency, or split differently
 - **Failed**: assess whether to retry the same approach or rethink
 
 After independent tasks finish, check if any sequenced tasks are now unblocked and spawn them.
 
+## Step 5b: Spawn Reviewer Agents
+
+For each successfully created PR, spawn a reviewer agent in parallel:
+- Read `.claude/prompts/reviewer.md` for the full reviewer instructions
+- Pass the reviewer: PR number, original task description, branch name
+- The reviewer will read the diff, view the screenshot, and approve or request changes autonomously
+
+Example reviewer prompt:
+```
+You are a code reviewer. Read .claude/prompts/reviewer.md for full instructions.
+
+PR number: <N>
+Branch: <branch>
+Original task: <paste the full task description from ORCHESTRATION.md>
+Screenshot is at: .github/pr-screenshots/pr-<N>.png on the branch
+```
+
+Reviewers run in parallel — spawn all at once, don't wait for one before starting the next.
+
 ## Step 6: Report to User
 
-When all tasks for the feature are done (or blocked with explanation):
+When all workers and reviewers are done:
 ```
 Feature: <name>
-PRs ready for review:
-- PR #123: <title> — <branch>
-- PR #124: <title> — <branch>
 
-Blocked:
+PRs approved and ready to merge:
+- PR #123: <title> — approved ✅
+- PR #124: <title> — approved ✅
+
+PRs needing changes:
+- PR #125: <title> — changes requested: <reason>
+
+Blocked tasks:
 - T005: <what's blocking it>
 ```
 
@@ -79,5 +102,7 @@ Blocked:
 - `todo` — planned, not started
 - `in_progress` — worker spawned and working
 - `done` — PR created, passes quality gate
+- `approved` — reviewer approved the PR, ready to merge
+- `changes_requested` — reviewer found issues, needs rework
 - `blocked` — worker stopped, needs Mayor intervention
 - `merged` — PR merged to master
