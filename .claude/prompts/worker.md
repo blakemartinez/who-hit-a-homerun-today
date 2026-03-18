@@ -66,46 +66,51 @@ EOF
 )"
 ```
 
-### 6. Add screenshot to PR description
-After creating the PR, wait for Vercel to post its preview URL (up to 3 minutes), then screenshot it:
+### 6. Take a screenshot of your feature and add it to the PR
+
+This is a visual test artifact — screenshot the exact page or UI that your task changed, not just the homepage.
+
+**Step 6a — Determine the route to screenshot**
+
+Based on what you built, pick the most representative URL:
+- New page (e.g. `/game`, `/leaderboard`) → screenshot that page
+- Player page changes → screenshot `/player/592450` (Aaron Judge — reliable data)
+- Main page changes → screenshot `/`
+- Component changes (card, modal, etc.) → screenshot the page the component appears on
+
+**Step 6b — Build and screenshot locally**
+
+You are running inside a git worktree so a local build is safe — it won't affect the main repo's dev server or `.next` cache.
 
 ```bash
-# Poll for Vercel comment with preview URL (check every 20s, up to 3 min)
-PR_NUM=<number>
-PREVIEW_URL=""
-for i in $(seq 1 9); do
-  PREVIEW_URL=$(gh pr view $PR_NUM --json comments \
-    --jq '.comments[] | select(.author.login == "vercel") | .body' \
-    | grep -oP 'https://who-hit-a-homerun-today-git-[^\)]+\.vercel\.app' | head -1)
-  [ -n "$PREVIEW_URL" ] && break
-  sleep 20
-done
+WORKTREE_DIR=$(pwd)   # you are already in the worktree
+SCREENSHOT="/tmp/pr-<PR_NUM>-screenshot.png"
+ROUTE="<the route you determined above>"
 
-if [ -n "$PREVIEW_URL" ]; then
-  SCREENSHOT="/tmp/pr-${PR_NUM}-screenshot.png"
-  node /home/bmart32/code/who-hit-a-homerun-today/.claude/scripts/screenshot-pr.mjs "$PREVIEW_URL" "$SCREENSHOT"
-
-  # Upload to GitHub and get CDN URL
-  UPLOAD=$(gh api repos/blakemartinez/who-hit-a-homerun-today/issues/$PR_NUM/assets \
-    --method POST \
-    -H "Content-Type: image/png" \
-    --input "$SCREENSHOT" 2>/dev/null)
-
-  IMAGE_URL=$(echo "$UPLOAD" | jq -r '.browser_download_url // empty')
-
-  if [ -n "$IMAGE_URL" ]; then
-    # Edit PR body to append screenshot
-    CURRENT_BODY=$(gh pr view $PR_NUM --json body --jq '.body')
-    gh pr edit $PR_NUM --body "${CURRENT_BODY}
-
-## Preview
-![Screenshot](${IMAGE_URL})
-[Live preview ↗](${PREVIEW_URL})"
-  fi
-fi
+node /home/bmart32/code/who-hit-a-homerun-today/.claude/scripts/screenshot-local.mjs \
+  "$WORKTREE_DIR" "$ROUTE" "$SCREENSHOT"
 ```
 
-If the GitHub asset upload API isn't available, just append the preview URL link to the PR body without an image.
+The script builds, starts the server, screenshots the route, then cleans up automatically.
+
+**Step 6c — Commit screenshot and add to PR description**
+
+```bash
+mkdir -p .github/pr-screenshots
+cp "$SCREENSHOT" ".github/pr-screenshots/pr-<PR_NUM>.png"
+git add ".github/pr-screenshots/pr-<PR_NUM>.png"
+git commit -m "chore: add PR screenshot
+
+Co-Authored-By: Blake's Claude Minion <blakes-claude-minion@noreply.local>"
+git push
+
+RAW_URL="https://raw.githubusercontent.com/blakemartinez/who-hit-a-homerun-today/<branch>/.github/pr-screenshots/pr-<PR_NUM>.png"
+CURRENT_BODY=$(gh pr view <PR_NUM> --json body --jq '.body')
+gh pr edit <PR_NUM> --body "${CURRENT_BODY}
+
+## Screenshot
+![Screenshot](${RAW_URL})"
+```
 
 ### 7. Update ORCHESTRATION.md
 After creating the PR, update your task row:
@@ -131,7 +136,7 @@ Co-Authored-By: Blake's Claude Minion <blakes-claude-minion@noreply.local>
 - Stop and report the blocker clearly so the Mayor can reassign or unblock
 
 ## What NOT to Do
-- Do not run `npm run build` (may corrupt .next if dev is running)
+- Do not run `npm run build` in the **main repo** (may corrupt .next if dev is running) — building inside your worktree is fine and required for screenshots
 - Do not push to `master` directly
 - Do not modify files outside the scope of your task
 - Do not create new files unless clearly required
