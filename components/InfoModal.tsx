@@ -41,7 +41,13 @@ export default function InfoModal() {
                 Click a player&apos;s name or photo to open their profile: season stats, a spray map of HR landing spots, and a flipper you can page through game by game. Each HR shows the pitch, ball metrics, and MLB&apos;s excitement score. The season picker goes back to their debut year.
               </p>
               <p className="text-zinc-500 text-xs leading-relaxed">
+                the player profile also has a pitch zone map — every HR plotted in the strike zone, color-coded by pitch type — and a pitch type breakdown showing which pitches they&apos;ve gone deep on.
+              </p>
+              <p className="text-zinc-500 text-xs leading-relaxed">
                 ⌘K or the search icon in the corner finds any player — active or retired.
+              </p>
+              <p className="text-zinc-500 text-xs leading-relaxed">
+                toggle <span className="text-zinc-300">WBC</span> at the top to switch to World Baseball Classic mode — same tracker, same data, but for WBC games.
               </p>
             </div>
 
