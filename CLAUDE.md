@@ -59,6 +59,23 @@ Next.js 15 App Router, TypeScript, Tailwind CSS.
 
 Cards support up to 3 visible borders via `border` + `ring` + `outline`.
 
+## Orchestration
+
+This project uses a lightweight Gastown-inspired multi-agent orchestration system.
+
+**To use it:** Describe a feature. Claude acts as Mayor — it plans, spawns parallel worker agents in isolated git worktrees, and surfaces results as PRs.
+
+**Key files:**
+- `ORCHESTRATION.md` — living task state (source of truth); always committed to master
+- `.claude/prompts/mayor.md` — Mayor planning logic
+- `.claude/prompts/worker.md` — Worker agent instructions
+
+**Task lifecycle:** `todo` → `in_progress` → `done` → `merged`
+
+**Quality gate:** Every worker must pass `npx tsc --noEmit` + `npm run lint` before creating a PR. No exceptions.
+
+**Workers never push to master** — only feature branches via PRs.
+
 ## Commits
 
 Always include this co-author trailer:

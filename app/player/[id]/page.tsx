@@ -131,7 +131,7 @@ export default async function PlayerPage({
           </div>
           <div>
             <h1 className="text-xl font-bold text-zinc-100 leading-tight">{info.fullName}</h1>
-            <p className="text-zinc-500 text-sm mt-0.5">{info.currentTeam?.name}</p>
+            <p className="text-zinc-500 text-sm mt-0.5">{stats?.teamName ?? info.currentTeam?.name}</p>
             <p className="text-zinc-600 text-xs mt-1">
               {info.primaryPosition?.abbreviation}
               {info.batSide?.description ? ` · bats ${info.batSide.description.toLowerCase()}` : ""}
