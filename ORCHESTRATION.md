@@ -18,7 +18,7 @@ See `.claude/prompts/mayor.md` and `.claude/prompts/worker.md` for full orchestr
 
 | ID | Title | Status | Branch | PR | Depends On | Description |
 |----|-------|--------|--------|----|------------|-------------|
-| T003 | Update InfoModal | changes_requested | feat/T003-info-modal | https://github.com/blakemartinez/who-hit-a-homerun-today/pull/4 | — | Add Guess Who Hit It game mention to modal copy |
+| — | — | — | — | — | — | — |
 
 ---
 
@@ -36,7 +36,7 @@ See `.claude/prompts/mayor.md` and `.claude/prompts/worker.md` for full orchestr
 |----|-------|----|--------|
 | T001 | Season team on player page | https://github.com/blakemartinez/who-hit-a-homerun-today/pull/2 | ✅ |
 | T002 | SEO improvements | https://github.com/blakemartinez/who-hit-a-homerun-today/pull/3 | ✅ |
-| T003 | Update InfoModal | https://github.com/blakemartinez/who-hit-a-homerun-today/pull/4 | changes_requested |
+| T003 | Update InfoModal | https://github.com/blakemartinez/who-hit-a-homerun-today/pull/4 | ✅ |
 | T004 | Guess Who Hit It game | https://github.com/blakemartinez/who-hit-a-homerun-today/pull/5 | ✅ |
 
 ---
