@@ -97,6 +97,7 @@ export interface SeasonStats {
   slg: string;
   ops: string;
   season: string;
+  teamName?: string;
 }
 
 export interface HRGameLogEntry {
@@ -131,7 +132,7 @@ export async function getSeasonStats(playerId: number, season?: number): Promise
     const data = await res.json();
     const split = data.stats?.[0]?.splits?.[0];
     if (split?.stat?.gamesPlayed > 0) {
-      return { ...split.stat, season: String(s) };
+      return { ...split.stat, season: String(s), teamName: split.team?.name };
     }
   }
   return null;
