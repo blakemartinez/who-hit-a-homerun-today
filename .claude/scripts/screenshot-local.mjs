@@ -1,12 +1,16 @@
 #!/usr/bin/env node
 /**
- * screenshot-local.mjs <worktreeDir> <route> <outputPath>
+ * screenshot-local.mjs <worktreeDir> <route> <outputPath> [--click <selector>]
  *
  * Builds the Next.js app in worktreeDir, starts the server, screenshots
  * the given route, then shuts everything down.
  *
- * Example:
+ * Options:
+ *   --click <selector>  CSS selector to click before taking the screenshot
+ *
+ * Examples:
  *   node screenshot-local.mjs /path/to/worktree /game /tmp/pr-5.png
+ *   node screenshot-local.mjs /path/to/worktree / /tmp/pr-4.png --click "button[aria-label='What is this?']"
  */
 
 import { chromium } from "playwright";
@@ -14,9 +18,13 @@ import { execSync, spawn } from "child_process";
 import { writeFileSync, rmSync } from "fs";
 import { resolve } from "path";
 
-const [, , worktreeDir, route, outputPath] = process.argv;
+const args = process.argv.slice(2);
+const clickIdx = args.indexOf("--click");
+const clickSelector = clickIdx !== -1 ? args.splice(clickIdx, 2)[1] : null;
+const [worktreeDir, route, outputPath] = args;
+
 if (!worktreeDir || !route || !outputPath) {
-  console.error("Usage: screenshot-local.mjs <worktreeDir> <route> <outputPath>");
+  console.error("Usage: screenshot-local.mjs <worktreeDir> <route> <outputPath> [--click <selector>]");
   process.exit(1);
 }
 
@@ -66,6 +74,11 @@ await page.setViewportSize({ width: 1280, height: 900 });
 try {
   await page.goto(url, { waitUntil: "networkidle", timeout: 20000 });
   await page.waitForTimeout(1500); // let animations settle
+  if (clickSelector) {
+    console.log(`Clicking selector: ${clickSelector}`);
+    await page.click(clickSelector);
+    await page.waitForTimeout(800); // let any modal/animation open
+  }
   const buffer = await page.screenshot({ fullPage: false });
   writeFileSync(outputPath, buffer);
   console.log(`Screenshot saved to ${outputPath}`);
