@@ -58,6 +58,22 @@ function ExcitementBar({ score }: { score: number }) {
   );
 }
 
+function getReactionTags(hr: HomeRunEvent): string[] {
+  // Do not show tags if no Statcast/captivating stats are available
+  const hasStats = hr.distance != null || hr.exitVelo != null || hr.captivatingIndex != null;
+  if (!hasStats) return [];
+  const tags: string[] = [];
+  // Priority order — collect all matches, then slice to max 2
+  if (hr.runsScored === "Grand Slam") tags.push("grand slam");
+  if (hr.distance != null && hr.distance >= 450) tags.push("moonshot");
+  if (hr.exitVelo != null && hr.exitVelo >= 108 && hr.distance != null && hr.distance >= 430) tags.push("no-doubter");
+  if (hr.exitVelo != null && hr.exitVelo >= 112) tags.push("scorcher");
+  if (hr.captivatingIndex != null && hr.captivatingIndex >= 80) tags.push("clutch");
+  if (hr.distance != null && hr.distance < 360) tags.push("cheapie");
+  if (hr.topBottom === "Top" && hr.captivatingIndex != null && hr.captivatingIndex >= 60) tags.push("silencer");
+  return tags.slice(0, 2);
+}
+
 function hasViz(hr: HomeRunEvent) {
   return hr.launchAngle != null || hr.coordX != null || hr.captivatingIndex != null;
 }
@@ -89,20 +105,33 @@ function HRRow({
             {hr.milestone && (
               <p className="text-emerald-600 text-xs mt-0.5">★ {hr.milestone}</p>
             )}
-            {(hr.distance != null || hr.exitVelo != null) && (
-              <div className="flex gap-3 mt-0.5">
-                {hr.distance != null && (
-                  <span className={`text-xs ${(hr.distance ?? 0) >= 450 ? "text-red-600" : "text-zinc-600"}`}>
-                    ↑ {hr.distance}ft
-                  </span>
-                )}
-                {hr.exitVelo != null && (
-                  <span className={`text-xs ${(hr.exitVelo ?? 0) >= 110 ? "text-yellow-500" : "text-zinc-600"}`}>
-                    → {hr.exitVelo}mph
-                  </span>
-                )}
-              </div>
-            )}
+            {(() => {
+              const tags = getReactionTags(hr);
+              const hasStatLine = hr.distance != null || hr.exitVelo != null;
+              if (!hasStatLine && tags.length === 0) return null;
+              return (
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5">
+                  {hr.distance != null && (
+                    <span className={`text-xs ${hr.distance >= 450 ? "text-red-600" : "text-zinc-600"}`}>
+                      ↑ {hr.distance}ft
+                    </span>
+                  )}
+                  {hr.exitVelo != null && (
+                    <span className={`text-xs ${hr.exitVelo >= 110 ? "text-yellow-500" : "text-zinc-600"}`}>
+                      → {hr.exitVelo}mph
+                    </span>
+                  )}
+                  {tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-zinc-700"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {hr.pitchType && (
