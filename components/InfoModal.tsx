@@ -49,6 +49,9 @@ export default function InfoModal() {
               <p className="text-zinc-500 text-xs leading-relaxed">
                 toggle <span className="text-zinc-300">WBC</span> at the top to switch to World Baseball Classic mode — same tracker, same data, but for WBC games.
               </p>
+              <p className="text-zinc-500 text-xs leading-relaxed">
+                there&apos;s also a <a href="/game" className="text-zinc-300 hover:text-zinc-100 underline underline-offset-2 transition-colors">game</a> — given the stats and trajectory of a HR, guess which player hit it. today&apos;s HRs, no hints.
+              </p>
             </div>
 
             <div className="border-t border-zinc-800 pt-4">
