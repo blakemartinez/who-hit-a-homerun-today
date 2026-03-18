@@ -59,6 +59,29 @@ Next.js 15 App Router, TypeScript, Tailwind CSS.
 
 Cards support up to 3 visible borders via `border` + `ring` + `outline`.
 
+## Orchestration
+
+This project uses a lightweight Gastown-inspired multi-agent orchestration system.
+
+**To use it:** Describe a feature. Claude acts as Mayor Minion — it plans, spawns parallel Worker Minions in isolated git worktrees, then Blake Review Minions approve+merge or request changes.
+
+**Key files:**
+- `ORCHESTRATION.md` — living task state (source of truth); always committed to master
+- `.claude/prompts/mayor.md` — Mayor Minion planning logic
+- `.claude/prompts/worker.md` — Worker Minion instructions
+- `.claude/prompts/reviewer.md` — Blake Review Minion instructions
+
+**Minion roles:**
+- **Mayor Minion** — orchestrates, decomposes features, spawns workers and reviewers
+- **Worker Minion** — implements tasks in isolated worktrees, creates PRs with screenshots
+- **Blake Review Minion** — reviews code diff + screenshot, approves+merges or requests changes
+
+**Task lifecycle:** `todo` → `in_progress` → `done` → `merged`
+
+**Quality gate:** Every Worker Minion must pass `npx tsc --noEmit` + `npm run lint` before creating a PR. No exceptions.
+
+**Worker Minions never push to master** — only feature branches via PRs. Blake Review Minion handles the merge.
+
 ## Commits
 
 Always include this co-author trailer:
