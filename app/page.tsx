@@ -46,6 +46,7 @@ export async function generateMetadata({
 }
 
 export interface HomeRunEvent {
+  playId: string;
   topBottom: "Top" | "Bot";
   inning: string;
   runsScored: string;
@@ -62,6 +63,7 @@ export interface HomeRunEvent {
   isPlayoffs: boolean;
   milestone: string | null;
   venue: string;
+  pitcherName: string;
 }
 
 const ROUND_MILESTONES = new Set([10, 20, 25, 30, 35, 40, 45, 50, 55]);
@@ -100,6 +102,8 @@ export interface PlayerStat {
   imageUrl: string;
   mlbUrl: string;
   homeRuns: HomeRunEvent[];
+  gamePk: number;
+  date: string;
 }
 
 export const dynamic = "force-dynamic";
@@ -225,6 +229,7 @@ export default async function Page({
       const milestone = isWBC ? null : getMilestone(hrNumber, isPlayoffs);
 
       const hrEvent: HomeRunEvent = {
+        playId: play.playId,
         topBottom,
         inning: addSuffix(inning),
         runsScored,
@@ -241,6 +246,7 @@ export default async function Page({
         isPlayoffs,
         milestone,
         venue,
+        pitcherName: play.matchup.pitcher.fullName,
       };
 
       if (playerMap.has(id)) {
@@ -253,6 +259,8 @@ export default async function Page({
           imageUrl: playerImageUrl(id),
           mlbUrl: mlbPlayerUrl(id),
           homeRuns: [hrEvent],
+          gamePk: game.gamePk,
+          date,
         });
       }
     }
