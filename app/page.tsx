@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getSchedule, getPlayByPlay, getHRLeaders, Play } from "@/lib/mlb";
+import { getSchedule, getPlayByPlay, getHRLeaders, getScheduleWithProbables, getHRLeadersWithTeam, Play } from "@/lib/mlb";
 import {
   addSuffix,
   formatDisplayDate,
@@ -13,6 +13,7 @@ import InfoModal from "@/components/InfoModal";
 import CastellanosEasterEgg from "@/components/CastellanosEasterEgg";
 import ShareButton from "@/components/ShareButton";
 import EmptyState from "@/components/EmptyState";
+import HRThreatsList, { HRThreat } from "@/components/HRThreatsList";
 import SportToggle from "@/components/SportToggle";
 
 const CASTELLANOS_DATE = "2020-08-19";
@@ -113,11 +114,60 @@ export default async function Page({
   const isWBC = params.sport === "wbc";
   const sportId = isWBC ? 51 : 1;
   const season = Number(date.slice(0, 4));
+  const today = getTodayChicago();
+  const isFutureDate = !isWBC && date > today;
 
-  const [games, hrLeaders] = await Promise.all([
+  const [games, hrLeaders, futureSchedule, futureHRLeaders] = await Promise.all([
     getSchedule(date, sportId),
     isWBC ? Promise.resolve([]) : getHRLeaders(season),
+    isFutureDate ? getScheduleWithProbables(date) : Promise.resolve([]),
+    isFutureDate ? getHRLeadersWithTeam(today.slice(0, 4) === date.slice(0, 4) ? season : season - 1) : Promise.resolve([]),
   ]);
+
+  // Build HR threats for future dates
+  let hrThreats: HRThreat[] = [];
+  if (isFutureDate && futureSchedule.length > 0 && futureHRLeaders.length > 0) {
+    // Build a map: teamId -> game info
+    const teamGameMap = new Map<number, {
+      opponentTeam: string;
+      isHome: boolean;
+      venueName: string;
+      probablePitcherName: string | null;
+    }>();
+    for (const game of futureSchedule) {
+      const awayTeamId = game.teams.away.team.id;
+      const homeTeamId = game.teams.home.team.id;
+      const venueName = game.venue?.name ?? "";
+      teamGameMap.set(awayTeamId, {
+        opponentTeam: game.teams.home.team.name,
+        isHome: false,
+        venueName,
+        probablePitcherName: game.teams.home.probablePitcher?.fullName ?? null,
+      });
+      teamGameMap.set(homeTeamId, {
+        opponentTeam: game.teams.away.team.name,
+        isHome: true,
+        venueName,
+        probablePitcherName: game.teams.away.probablePitcher?.fullName ?? null,
+      });
+    }
+
+    for (const leader of futureHRLeaders) {
+      const gameInfo = teamGameMap.get(leader.team.id);
+      if (!gameInfo) continue;
+      hrThreats.push({
+        playerName: leader.person.fullName,
+        teamName: leader.team.name,
+        seasonHRs: Number(leader.value),
+        opponentTeam: gameInfo.opponentTeam,
+        isHome: gameInfo.isHome,
+        venueName: gameInfo.venueName,
+        probablePitcherName: gameInfo.probablePitcherName,
+      });
+    }
+    // Sort by seasonHRs descending, take top 12
+    hrThreats = hrThreats.sort((a, b) => b.seasonHRs - a.seasonHRs).slice(0, 12);
+  }
 
   const playerMap = new Map<number, PlayerStat>();
 
@@ -211,7 +261,7 @@ export default async function Page({
   const players = Array.from(playerMap.values());
   const totalHRs = players.reduce((sum, p) => sum + p.homeRuns.length, 0);
   const displayDate = formatDisplayDate(date);
-  const isToday = date === getTodayChicago();
+  const isToday = date === today;
   const isSpringTraining = games.some((g) => g.gameType === "S");
 
   return (
@@ -255,7 +305,11 @@ export default async function Page({
 
         {/* Player grid + sort */}
         {players.length === 0 ? (
-          <EmptyState date={date} isToday={isToday} todayDate={getTodayChicago()} />
+          isFutureDate && hrThreats.length > 0 ? (
+            <HRThreatsList threats={hrThreats} date={date} />
+          ) : (
+            <EmptyState date={date} isToday={isToday} todayDate={today} />
+          )
         ) : (
           <PlayerGrid players={players} totalHRs={totalHRs} />
         )}
