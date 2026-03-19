@@ -109,8 +109,11 @@ export default function HRTrajectory({ launchAngle, distance, exitVelo, venue, i
         {/* Launch angle indicator */}
         <line x1={HOME.x} y1={HOME.y} x2={indX} y2={indY}
           stroke="#52525b" strokeWidth="1" strokeLinecap="round" />
-        <text x={indX - 10} y={indY - 3} fill="#a1a1aa" fontSize="5.5"
-          stroke="#18181b" strokeWidth="2.5" paintOrder="stroke fill">{launchAngle}°</text>
+        <g>
+          <rect x={indX - 16} y={indY - 9} width={18} height={8}
+            fill="rgba(9,9,11,0.7)" rx="1" />
+          <text x={indX - 7} y={indY - 3} textAnchor="middle" fill="#a1a1aa" fontSize="5.5">{launchAngle}°</text>
+        </g>
 
         {/* Trajectory arc */}
         <path d={ballPath} fill="none" stroke="#a1a1aa" strokeWidth="1.5"
@@ -130,11 +133,14 @@ export default function HRTrajectory({ launchAngle, distance, exitVelo, venue, i
 
         {/* Exit velo near apex */}
         {exitVelo != null && (
-          <text x={veloX - 2} y={veloY - 5} textAnchor="middle" fill="#a1a1aa" fontSize="6" opacity="0"
-            stroke="#18181b" strokeWidth="2.5" paintOrder="stroke fill">
-            {exitVelo} mph
+          <g opacity="0">
             <animate attributeName="opacity" from="0" to="1" dur="0.2s" begin="0.45s" fill="freeze" />
-          </text>
+            <rect x={veloX - 16} y={veloY - 12} width={32} height={9}
+              fill="rgba(9,9,11,0.7)" rx="1" />
+            <text x={veloX - 2} y={veloY - 5} textAnchor="middle" fill="#a1a1aa" fontSize="6">
+              {exitVelo} mph
+            </text>
+          </g>
         )}
 
         {/* Landing: marker + pulse ring + distance label */}
@@ -145,11 +151,14 @@ export default function HRTrajectory({ launchAngle, distance, exitVelo, venue, i
           <animate attributeName="opacity" from="0.7" to="0" dur="0.7s" begin="1.05s" fill="freeze" />
           <animate attributeName="r" from="2.5" to="10" dur="0.7s" begin="1.05s" fill="freeze" />
         </circle>
-        <text x={landX} y={landY + 10} textAnchor="middle" fill="#a1a1aa" fontSize="5.5" opacity="0"
-          stroke="#18181b" strokeWidth="2.5" paintOrder="stroke fill">
-          {distance} ft
+        <g opacity="0">
           <animate attributeName="opacity" from="0" to="1" dur="0.2s" begin="1.05s" fill="freeze" />
-        </text>
+          <rect x={landX - 14} y={landY + 2} width={28} height={8}
+            fill="rgba(9,9,11,0.7)" rx="1" />
+          <text x={landX} y={landY + 9} textAnchor="middle" fill="#a1a1aa" fontSize="5.5">
+            {distance} ft
+          </text>
+        </g>
 
         {/* Venue */}
         <text x={W/2} y={H-1} textAnchor="middle" fill="#3f3f46" fontSize="5" fontStyle="italic">
