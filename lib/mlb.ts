@@ -30,7 +30,6 @@ export interface PlayEvent {
 }
 
 export interface Play {
-  playId: string;
   result: {
     eventType: string;
     rbi: number;
@@ -41,6 +40,7 @@ export interface Play {
     pitcher: { fullName: string; id: number };
   };
   about: {
+    atBatIndex: number;
     inning: number;
     isTopInning: boolean;
     captivatingIndex: number;

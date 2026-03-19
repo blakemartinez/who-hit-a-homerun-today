@@ -16,7 +16,7 @@ export default async function Image({ params }: { params: Promise<Params> }) {
   const { date, gamePk, playId } = await params;
 
   const plays = await getPlayByPlay(Number(gamePk));
-  const play = plays.find((p) => p.playId === playId);
+  const play = plays.find((p) => p.about.atBatIndex === Number(playId));
 
   if (!play) {
     return new ImageResponse(

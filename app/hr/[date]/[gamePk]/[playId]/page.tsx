@@ -13,7 +13,7 @@ interface Params {
 
 async function getHRPlay(gamePk: number, playId: string) {
   const plays = await getPlayByPlay(gamePk);
-  return plays.find((p) => p.playId === playId) ?? null;
+  return plays.find((p) => p.about.atBatIndex === Number(playId)) ?? null;
 }
 
 export async function generateMetadata({

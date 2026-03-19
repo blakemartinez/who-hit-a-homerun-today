@@ -112,7 +112,7 @@ async function fetchHRsForDate(date: string): Promise<HREntry[]> {
         playerId,
         team,
         gamePk: game.gamePk,
-        playId: play.playId,
+        playId: String(play.about.atBatIndex),
         exitVelo,
         distance,
         launchAngle,

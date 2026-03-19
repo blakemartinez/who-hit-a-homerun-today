@@ -229,7 +229,7 @@ export default async function Page({
       const milestone = isWBC ? null : getMilestone(hrNumber, isPlayoffs);
 
       const hrEvent: HomeRunEvent = {
-        playId: play.playId,
+        playId: String(play.about.atBatIndex),
         topBottom,
         inning: addSuffix(inning),
         runsScored,
