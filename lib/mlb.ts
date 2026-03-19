@@ -1,110 +1,113 @@
+import { z } from "zod";
+
 const MLB_API = "https://statsapi.mlb.com/api/v1";
 
-// --- Types ---
+// --- Zod Schemas ---
 
-export interface ScheduleGame {
-  gamePk: number;
-  gameType: string; // "R" = regular season, "F/D/L/W" = playoffs
-  teams: {
-    away: { team: { id: number; name: string } };
-    home: { team: { id: number; name: string } };
-  };
-  venue: { name: string };
-}
+const ScheduleGameSchema = z.object({
+  gamePk: z.number(),
+  gameType: z.string(),
+  teams: z.object({
+    away: z.object({ team: z.object({ id: z.number(), name: z.string() }) }),
+    home: z.object({ team: z.object({ id: z.number(), name: z.string() }) }),
+  }),
+  venue: z.object({ name: z.string() }).optional(),
+});
 
-interface HitData {
-  launchSpeed?: number;
-  launchAngle?: number;
-  totalDistance?: number;
-  hardness?: string;
-  coordinates?: { coordX: number; coordY: number };
-}
+const HitDataSchema = z.object({
+  launchSpeed: z.number().optional(),
+  launchAngle: z.number().optional(),
+  totalDistance: z.number().optional(),
+  hardness: z.string().optional(),
+  coordinates: z.object({ coordX: z.number(), coordY: z.number() }).optional(),
+});
 
-export interface PlayEvent {
-  hitData?: HitData;
-  details?: { type?: { code?: string; description?: string } };
-  pitchData?: {
-    startSpeed?: number;
-    coordinates?: { pX?: number; pZ?: number };
-  };
-}
+const PlayEventSchema = z.object({
+  hitData: HitDataSchema.optional(),
+  details: z
+    .object({
+      type: z
+        .object({
+          code: z.string().optional(),
+          description: z.string().optional(),
+        })
+        .optional(),
+    })
+    .optional(),
+  pitchData: z
+    .object({
+      startSpeed: z.number().optional(),
+      coordinates: z
+        .object({ pX: z.number().optional(), pZ: z.number().optional() })
+        .optional(),
+    })
+    .optional(),
+});
 
-export interface Play {
-  result: {
-    eventType: string;
-    rbi: number;
-    description: string;
-  };
-  matchup: {
-    batter: { fullName: string; id: number };
-    pitcher: { fullName: string; id: number };
-  };
-  about: {
-    atBatIndex: number;
-    inning: number;
-    isTopInning: boolean;
-    captivatingIndex: number;
-  };
-  playEvents: PlayEvent[];
-}
+const PlaySchema = z.object({
+  result: z.object({
+    eventType: z.string(),
+    rbi: z.number(),
+    description: z.string(),
+  }),
+  matchup: z.object({
+    batter: z.object({ fullName: z.string(), id: z.number() }),
+    pitcher: z.object({ fullName: z.string(), id: z.number() }),
+  }),
+  about: z.object({
+    atBatIndex: z.number(),
+    inning: z.number(),
+    isTopInning: z.boolean(),
+    captivatingIndex: z.number().optional(),
+  }),
+  playEvents: z.array(PlayEventSchema),
+});
 
-export interface HRLeader {
-  rank: number;
-  value: string;
-  person: { fullName: string; id: number };
-  team: { id: number; name: string };
-}
+const HRLeaderSchema = z.object({
+  rank: z.number(),
+  value: z.string(),
+  person: z.object({ fullName: z.string(), id: z.number() }),
+  team: z.object({ id: z.number(), name: z.string() }),
+});
 
-export interface ScheduleGameWithProbables {
-  gamePk: number;
-  gameType: string;
-  teams: {
-    away: {
-      team: { id: number; name: string };
-      probablePitcher?: { fullName: string };
-    };
-    home: {
-      team: { id: number; name: string };
-      probablePitcher?: { fullName: string };
-    };
-  };
-  venue: { name: string };
-}
+const ScheduleGameWithProbablesSchema = z.object({
+  gamePk: z.number(),
+  gameType: z.string(),
+  teams: z.object({
+    away: z.object({
+      team: z.object({ id: z.number(), name: z.string() }),
+      probablePitcher: z.object({ fullName: z.string() }).optional(),
+    }),
+    home: z.object({
+      team: z.object({ id: z.number(), name: z.string() }),
+      probablePitcher: z.object({ fullName: z.string() }).optional(),
+    }),
+  }),
+  venue: z.object({ name: z.string() }).optional(),
+});
 
-// --- Fetch helpers ---
+const PlayerInfoSchema = z.object({
+  id: z.number(),
+  fullName: z.string(),
+  primaryPosition: z.object({ abbreviation: z.string() }),
+  batSide: z.object({ description: z.string() }),
+  currentTeam: z.object({ name: z.string() }),
+  birthDate: z.string().optional(),
+  mlbDebutDate: z.string().optional(),
+  height: z.string().optional(),
+  weight: z.number().optional(),
+});
 
-export async function getSchedule(date: string, sportId = 1): Promise<ScheduleGame[]> {
-  const res = await fetch(
-    `${MLB_API}/schedule?sportId=${sportId}&date=${date}&hydrate=team,venue`,
-    { next: { revalidate: 60 } }
-  );
-  if (!res.ok) return [];
-  const data = await res.json();
-  return data.dates?.[0]?.games ?? [];
-}
+// --- Types (derived from schemas — exported names stay identical) ---
 
-export async function getPlayByPlay(gamePk: number): Promise<Play[]> {
-  const res = await fetch(
-    `${MLB_API}/game/${gamePk}/playByPlay`,
-    { next: { revalidate: 60 } }
-  );
-  if (!res.ok) return [];
-  const data = await res.json();
-  return data.allPlays ?? [];
-}
+export type ScheduleGame = z.infer<typeof ScheduleGameSchema>;
+export type PlayEvent = z.infer<typeof PlayEventSchema>;
+export type Play = z.infer<typeof PlaySchema>;
+export type HRLeader = z.infer<typeof HRLeaderSchema>;
+export type ScheduleGameWithProbables = z.infer<typeof ScheduleGameWithProbablesSchema>;
+export type PlayerInfo = z.infer<typeof PlayerInfoSchema>;
 
-export interface PlayerInfo {
-  id: number;
-  fullName: string;
-  primaryPosition: { abbreviation: string };
-  batSide: { description: string };
-  currentTeam: { name: string };
-  birthDate?: string;
-  mlbDebutDate?: string;  // "YYYY-MM-DD"
-  height?: string;
-  weight?: number;
-}
-
+// These are not derived from API schemas — kept as interfaces
 export interface SeasonStats {
   gamesPlayed: number;
   atBats: number;
@@ -127,6 +130,62 @@ export interface HRGameLogEntry {
   gamePk: number;
 }
 
+export interface PlayerHRDetail {
+  date: string;
+  opponent: string;
+  isHome: boolean;
+  gamePk: number;
+  inning: number;
+  isTopInning: boolean;
+  rbi: number;
+  captivatingIndex: number | null;
+  coordX: number | null;
+  coordY: number | null;
+  distance: number | null;
+  exitVelo: number | null;
+  launchAngle: number | null;
+  pitchType: string | null;
+  pitchSpeed: number | null;
+  pitchX: number | null;
+  pitchZ: number | null;
+}
+
+// --- Fetch helpers ---
+
+export async function getSchedule(date: string, sportId = 1): Promise<ScheduleGame[]> {
+  const res = await fetch(
+    `${MLB_API}/schedule?sportId=${sportId}&date=${date}&hydrate=team,venue`,
+    { next: { revalidate: 60 } }
+  );
+  if (!res.ok) return [];
+  const data = await res.json();
+  const schema = z.object({
+    dates: z.array(z.object({ games: z.array(ScheduleGameSchema) })).optional(),
+  });
+  const result = schema.safeParse(data);
+  if (!result.success) {
+    console.error("MLB API parse error [getSchedule]:", result.error);
+    return [];
+  }
+  return result.data.dates?.[0]?.games ?? [];
+}
+
+export async function getPlayByPlay(gamePk: number): Promise<Play[]> {
+  const res = await fetch(
+    `${MLB_API}/game/${gamePk}/playByPlay`,
+    { next: { revalidate: 60 } }
+  );
+  if (!res.ok) return [];
+  const data = await res.json();
+  const schema = z.object({ allPlays: z.array(PlaySchema).optional() });
+  const result = schema.safeParse(data);
+  if (!result.success) {
+    console.error("MLB API parse error [getPlayByPlay]:", result.error);
+    return [];
+  }
+  return result.data.allPlays ?? [];
+}
+
 export async function getPlayerInfo(playerId: number): Promise<PlayerInfo | null> {
   const res = await fetch(
     `${MLB_API}/people/${playerId}?hydrate=currentTeam`,
@@ -134,7 +193,13 @@ export async function getPlayerInfo(playerId: number): Promise<PlayerInfo | null
   );
   if (!res.ok) return null;
   const data = await res.json();
-  return data.people?.[0] ?? null;
+  const schema = z.object({ people: z.array(PlayerInfoSchema).optional() });
+  const result = schema.safeParse(data);
+  if (!result.success) {
+    console.error("MLB API parse error [getPlayerInfo]:", result.error);
+    return null;
+  }
+  return result.data.people?.[0] ?? null;
 }
 
 export async function getSeasonStats(playerId: number, season?: number): Promise<SeasonStats | null> {
@@ -181,26 +246,6 @@ export async function getHRGameLog(playerId: number, season?: number): Promise<H
     if (splits.length > 0) return splits;
   }
   return [];
-}
-
-export interface PlayerHRDetail {
-  date: string;
-  opponent: string;
-  isHome: boolean;
-  gamePk: number;
-  inning: number;
-  isTopInning: boolean;
-  rbi: number;
-  captivatingIndex: number | null;
-  coordX: number | null;
-  coordY: number | null;
-  distance: number | null;
-  exitVelo: number | null;
-  launchAngle: number | null;
-  pitchType: string | null;
-  pitchSpeed: number | null;
-  pitchX: number | null;
-  pitchZ: number | null;
 }
 
 export async function getPlayerHRDetails(
@@ -255,7 +300,15 @@ export async function getHRLeaders(season: number): Promise<HRLeader[]> {
   );
   if (!res.ok) return [];
   const data = await res.json();
-  return data.leagueLeaders?.[0]?.leaders ?? [];
+  const schema = z.object({
+    leagueLeaders: z.array(z.object({ leaders: z.array(HRLeaderSchema) })).optional(),
+  });
+  const result = schema.safeParse(data);
+  if (!result.success) {
+    console.error("MLB API parse error [getHRLeaders]:", result.error);
+    return [];
+  }
+  return result.data.leagueLeaders?.[0]?.leaders ?? [];
 }
 
 export async function getScheduleWithProbables(date: string): Promise<ScheduleGameWithProbables[]> {
@@ -265,7 +318,17 @@ export async function getScheduleWithProbables(date: string): Promise<ScheduleGa
   );
   if (!res.ok) return [];
   const data = await res.json();
-  return data.dates?.[0]?.games ?? [];
+  const schema = z.object({
+    dates: z
+      .array(z.object({ games: z.array(ScheduleGameWithProbablesSchema) }))
+      .optional(),
+  });
+  const result = schema.safeParse(data);
+  if (!result.success) {
+    console.error("MLB API parse error [getScheduleWithProbables]:", result.error);
+    return [];
+  }
+  return result.data.dates?.[0]?.games ?? [];
 }
 
 export async function getHRLeadersWithTeam(season: number, limit = 50): Promise<HRLeader[]> {
@@ -275,5 +338,13 @@ export async function getHRLeadersWithTeam(season: number, limit = 50): Promise<
   );
   if (!res.ok) return [];
   const data = await res.json();
-  return data.leagueLeaders?.[0]?.leaders ?? [];
+  const schema = z.object({
+    leagueLeaders: z.array(z.object({ leaders: z.array(HRLeaderSchema) })).optional(),
+  });
+  const result = schema.safeParse(data);
+  if (!result.success) {
+    console.error("MLB API parse error [getHRLeadersWithTeam]:", result.error);
+    return [];
+  }
+  return result.data.leagueLeaders?.[0]?.leaders ?? [];
 }
