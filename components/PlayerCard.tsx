@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { PlayerStat, HomeRunEvent } from "@/app/page";
 import HRTrajectory from "@/components/HRTrajectory";
+import HRShareButton from "@/components/HRShareButton";
 
 const PITCH_SHORT: Record<string, string> = {
   "Four-Seam Fastball":  "4-seam",
@@ -82,10 +83,16 @@ function HRRow({
   hr,
   playerId,
   rowIndex,
+  date,
+  gamePk,
+  playerName,
 }: {
   hr: HomeRunEvent;
   playerId: number;
   rowIndex: number;
+  date: string;
+  gamePk: number;
+  playerName: string;
 }) {
   const [open, setOpen] = useState(false);
   const canExpand = hasViz(hr);
@@ -134,6 +141,10 @@ function HRRow({
             })()}
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            <HRShareButton
+              url={`https://homeruntoday.vercel.app/hr/${date}/${gamePk}/${hr.playId}`}
+              title={`${playerName} — ${hr.distance != null ? `${hr.distance}ft ` : ""}HR`}
+            />
             {hr.pitchType && (
               <div className="text-right">
                 <p className="text-zinc-600 text-xs italic">
@@ -171,7 +182,7 @@ function HRRow({
   );
 }
 
-export default function PlayerCard({ player }: { player: PlayerStat }) {
+export default function PlayerCard({ player, date, gamePk }: { player: PlayerStat; date: string; gamePk: number }) {
   const lastHR = player.homeRuns[player.homeRuns.length - 1];
   const hrNumber = lastHR.hrNumber;
   const isPlayoffs = lastHR.isPlayoffs;
@@ -247,7 +258,7 @@ export default function PlayerCard({ player }: { player: PlayerStat }) {
       {/* HR rows — each expands independently */}
       <ul className="space-y-2">
         {player.homeRuns.map((hr, i) => (
-          <HRRow key={i} hr={hr} playerId={player.id} rowIndex={i} />
+          <HRRow key={i} hr={hr} playerId={player.id} rowIndex={i} date={date} gamePk={gamePk} playerName={player.name} />
         ))}
       </ul>
 

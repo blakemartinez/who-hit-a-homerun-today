@@ -30,6 +30,7 @@ export interface PlayEvent {
 }
 
 export interface Play {
+  playId: string;
   result: {
     eventType: string;
     rbi: number;
@@ -37,6 +38,7 @@ export interface Play {
   };
   matchup: {
     batter: { fullName: string; id: number };
+    pitcher: { fullName: string; id: number };
   };
   about: {
     inning: number;
