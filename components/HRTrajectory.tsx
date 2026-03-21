@@ -1,11 +1,16 @@
 "use client";
 
-const VIEW_W = 420;
-const VIEW_H = 145;
-const GROUND_Y = 125;
-const HOME_X = 45;
-const WALL_REF_DIST = 400; // ft
-const WALL_REF_X = HOME_X + (WALL_REF_DIST / 500) * 330; // 309
+// Perspective view: camera slightly right of home plate, looking toward CF
+// Home plate = lower-right; LF = upper-left; RF = upper-right (foreshortened)
+const W = 185;
+const H = 100;
+const HOME   = { x: 155, y: 86 };
+const LF_END = { x: 14,      y: 14 }; // left field foul line far end
+const RF_END = { x: W - 8,   y: 30 }; // right field foul line far end (camera side, shorter)
+const CF_MID = { x: 82,      y: 10 }; // center of outfield wall
+
+// MLB spray coord home plate is ~(125, 205), foul lines at x≈33 and x≈217
+const SPRAY_HOME = { x: 125, y: 205 };
 
 interface Props {
   launchAngle: number;
@@ -17,109 +22,110 @@ interface Props {
   coordY?: number | null;
 }
 
-/** Sample a quadratic bezier at parameter t (0–1). */
-function qBez(t: number, x0: number, y0: number, x1: number, y1: number, x2: number, y2: number) {
-  const mt = 1 - t;
-  return {
-    x: mt * mt * x0 + 2 * mt * t * x1 + t * t * x2,
-    y: mt * mt * y0 + 2 * mt * t * y1 + t * t * y2,
-  };
-}
-
-export default function HRTrajectory({ launchAngle, distance, exitVelo, index, coordX, coordY }: Props) {
-  const arcId    = `arcPath-${index}`;
-  const shadowId = `shadowPath-${index}`;
-  const blurId   = `blur-${index}`;
-  const glowId   = `glow-${index}`;
-
-  // Landing position
-  const landX = HOME_X + Math.min(distance / 500, 1) * 330;
-  const landY = GROUND_Y;
-
-  // Physics arc apex
-  const apexFt = (distance * Math.tan((launchAngle * Math.PI) / 180)) / 4;
-  const apexFtCapped = Math.min(apexFt, 140);
-  const apexPx = Math.min(apexFtCapped * 0.62, 105);
-
-  // Quadratic bezier control point (midpoint makes peak exactly apexPx above ground)
-  const cpX = (HOME_X + landX) / 2;
-  const cpY = GROUND_Y - 2 * apexPx;
-
-  const arcPath    = `M ${HOME_X},${GROUND_Y} Q ${cpX},${cpY} ${landX},${GROUND_Y}`;
-  const shadowPath = `M ${HOME_X},${GROUND_Y} L ${landX},${GROUND_Y}`;
-
-  // Wall reference: only show if ball clearly cleared 400ft mark
-  const showWall = landX > WALL_REF_X + 20;
-
-  // Launch angle indicator
-  const angleRad = (launchAngle * Math.PI) / 180;
-  const indLen = 16;
-  const indEndX = HOME_X + Math.cos(angleRad) * indLen;
-  const indEndY = GROUND_Y - Math.sin(angleRad) * indLen;
-
-  // Label position: above-right if angle < 35°, above if >= 35°
-  const labelAbove = launchAngle >= 35;
-  const angleLabelX = labelAbove ? indEndX : indEndX + 2;
-  const angleLabelY = labelAbove ? indEndY - 5 : indEndY - 3;
-
-  // Exit velo label position (above arc apex)
-  const veloLabelX = cpX;
-  const veloLabelY = GROUND_Y - apexPx - 14;
-
-  // Spray mini-map (only if coords available)
-  const hasSpray = coordX != null && coordY != null;
-  let sprayEndX = 22;
-  let sprayEndY = 30;
-  if (hasSpray && coordX != null && coordY != null) {
-    const dx = coordX - 125;
-    const dy = 205 - coordY;
+/**
+ * Convert spray coords + distance into a perspective SVG landing position.
+ * Uses spray coords for lateral direction, totalDistance for depth.
+ */
+function getLanding(distance: number, coordX?: number | null, coordY?: number | null) {
+  let lat = 0;
+  if (coordX != null && coordY != null) {
+    const dx = coordX - SPRAY_HOME.x;
+    const dy = SPRAY_HOME.y - coordY; // flip y: positive = into field
     const len = Math.sqrt(dx * dx + dy * dy);
     if (len > 1) {
-      sprayEndX = 22 + (dx / len) * 11;
-      sprayEndY = 30 - (dy / len) * 11;
+      lat = Math.max(-1, Math.min(1, (dx / len) / 0.707));
     }
   }
 
-  // Spark particle positions (sampled along arc at t = 0.22, 0.5, 0.76)
-  const sparks = [0.22, 0.5, 0.76].map((t) =>
-    qBez(t, HOME_X, GROUND_Y, cpX, cpY, landX, GROUND_Y)
+  const t = (lat + 1) / 2; // 0 = LF, 0.5 = CF, 1 = RF
+  const wallX = LF_END.x + (RF_END.x - LF_END.x) * t;
+  const wallY = LF_END.y + (RF_END.y - LF_END.y) * t;
+  const distFrac = Math.max(0.25, Math.min(1, (distance - 270) / 220));
+
+  return {
+    x: HOME.x + (wallX - HOME.x) * distFrac,
+    y: HOME.y + (wallY - HOME.y) * distFrac,
+    lat,
+  };
+}
+
+/** Sample a cubic bezier at parameter t (0–1). */
+function bezierPt(t: number, x0: number, y0: number, x1: number, y1: number, x2: number, y2: number, x3: number, y3: number) {
+  const mt = 1 - t;
+  return {
+    x: mt ** 3 * x0 + 3 * mt ** 2 * t * x1 + 3 * mt * t ** 2 * x2 + t ** 3 * x3,
+    y: mt ** 3 * y0 + 3 * mt ** 2 * t * y1 + 3 * mt * t ** 2 * y2 + t ** 3 * y3,
+  };
+}
+
+export default function HRTrajectory({ launchAngle, distance, exitVelo, venue, index, coordX, coordY }: Props) {
+  const { x: landX, y: landY } = getLanding(distance, coordX, coordY);
+  const pathId    = `arc-${index}`;
+  const shadowId  = `shad-${index}`;
+  const glowId    = `glow-${index}`;
+  const blurId    = `blur-${index}`;
+
+  // Bezier control points
+  const peakH = Math.min((launchAngle / 45) * 52, 50);
+  const c1 = { x: HOME.x - 10, y: HOME.y - peakH * 1.35 };
+  const c2 = { x: landX + 10,  y: landY - peakH * 0.18 };
+  const ballPath   = `M ${HOME.x},${HOME.y} C ${c1.x},${c1.y} ${c2.x},${c2.y} ${landX},${landY}`;
+  const shadowPath = `M ${HOME.x},${HOME.y} L ${landX},${landY}`;
+
+  // Exit velo label: near apex (t=0.38)
+  const tb = 0.38, mt = 1 - tb;
+  const veloX = mt**3*HOME.x + 3*mt**2*tb*c1.x + 3*mt*tb**2*c2.x + tb**3*landX;
+  const veloY = mt**3*HOME.y + 3*mt**2*tb*c1.y + 3*mt*tb**2*c2.y + tb**3*landY;
+
+  // Launch angle indicator
+  const cfDx = landX - HOME.x, cfDy = landY - HOME.y;
+  const cfLen = Math.sqrt(cfDx * cfDx + cfDy * cfDy);
+  const rad = (launchAngle * Math.PI) / 180;
+  const indLen = 13;
+  const indX = HOME.x + (cfDx / cfLen) * Math.cos(rad) * indLen;
+  const indY = HOME.y + (cfDy / cfLen) * Math.cos(rad) * indLen - Math.sin(rad) * indLen;
+
+  // Spark particles: sampled at t=0.2, 0.48, 0.73 along arc
+  const sparks = [0.2, 0.48, 0.73].map((t) =>
+    bezierPt(t, HOME.x, HOME.y, c1.x, c1.y, c2.x, c2.y, landX, landY)
   );
 
-  // Glow color by exit velo: indigo (default) → amber (110+) → orange (115+)
+  // Glow / arc color by exit velo
   const glowColor =
-    exitVelo != null && exitVelo >= 115 ? "#f97316"
-    : exitVelo != null && exitVelo >= 110 ? "#fbbf24"
-    : "#818cf8";
+    exitVelo != null && exitVelo >= 115 ? "#f97316"   // orange — scorching
+    : exitVelo != null && exitVelo >= 110 ? "#fbbf24" // amber — very hot
+    : "#818cf8";                                       // indigo — default premium look
 
   // Physics-based easing:
-  //   58% of animation time for upswing (decelerating vs gravity)
-  //   42% for downswing (accelerating with gravity)
-  const pKT = "0;0.58;1";
-  const pKP = "0;0.5;1";
-  const pKS = "0.42 0 0.65 0.25;0.35 0.75 0.58 1";
+  //   ball spends 58% of time climbing (decelerating against gravity)
+  //   and 42% descending (accelerating with gravity)
+  const pKT  = "0;0.58;1";      // keyTimes
+  const pKP  = "0;0.5;1";       // keyPoints (half path each segment)
+  const pKS  = "0.42 0 0.65 0.25;0.35 0.75 0.58 1"; // keySplines: ease-out up, ease-in down
 
-  const begin  = "0.05s";
-  const dur    = "1.2s";
-  const landAt = "1.25s"; // begin + dur
+  const begin    = "0.05s";
+  const dur      = "1.2s";
+  const landAt   = "1.25s";  // begin + dur
 
-  // Approximate absolute begin times when ball passes each spark (t=0.22, 0.5, 0.76)
-  const sparkBegins = ["0.42s", "0.72s", "0.98s"];
+  // Approximate absolute begin times for sparks (ball passes these arc positions):
+  //   t=0.20 path → ~0.37s; t=0.48 → ~0.74s; t=0.73 → ~0.95s
+  const sparkBegins = ["0.37s", "0.74s", "0.95s"];
 
   return (
     <div className="mt-2 select-none">
-      <svg viewBox={`0 0 ${VIEW_W} ${VIEW_H}`} className="w-full h-auto" aria-hidden="true">
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" aria-hidden="true">
         <defs>
-          <path id={arcId}    d={arcPath} />
+          <path id={pathId}   d={ballPath} />
           <path id={shadowId} d={shadowPath} />
 
           {/* Soft blur for glow halo on ball and arc */}
           <filter id={blurId} x="-120%" y="-120%" width="340%" height="340%">
-            <feGaussianBlur stdDeviation="4" />
+            <feGaussianBlur stdDeviation="3.5" />
           </filter>
 
-          {/* Arc glow: blur + merge over original for a crisp corona */}
+          {/* Sharper glow for arc outline */}
           <filter id={glowId} x="-60%" y="-60%" width="220%" height="220%">
-            <feGaussianBlur stdDeviation="2" result="blur" />
+            <feGaussianBlur stdDeviation="1.8" result="blur" />
             <feMerge>
               <feMergeNode in="blur" />
               <feMergeNode in="SourceGraphic" />
@@ -129,67 +135,57 @@ export default function HRTrajectory({ launchAngle, distance, exitVelo, index, c
 
         {/* ── Field ──────────────────────────────────────────── */}
 
-        {/* Ground line */}
-        <line x1="0" y1={GROUND_Y} x2={VIEW_W} y2={GROUND_Y} stroke="#27272a" strokeWidth="1" />
-
-        {/* Home plate */}
-        <circle cx={HOME_X} cy={GROUND_Y} r="2" fill="#3f3f46" />
-
-        {/* Wall reference line */}
-        {showWall && (
-          <g>
-            <line
-              x1={WALL_REF_X} y1={110}
-              x2={WALL_REF_X} y2={GROUND_Y}
-              stroke="#3f3f46" strokeWidth="1" strokeDasharray="2 2"
-            />
-            <text x={WALL_REF_X} y={108} textAnchor="middle" fill="#3f3f46" fontSize="5">
-              400ft
-            </text>
-          </g>
-        )}
-
-        {/* Launch angle indicator */}
-        <line
-          x1={HOME_X} y1={GROUND_Y}
-          x2={indEndX} y2={indEndY}
-          stroke="#52525b" strokeWidth="1" strokeLinecap="round"
+        {/* Outfield wall arc */}
+        <path
+          d={`M ${LF_END.x},${LF_END.y} Q ${CF_MID.x},${CF_MID.y} ${RF_END.x},${RF_END.y}`}
+          fill="none" stroke="#27272a" strokeWidth="0.8"
         />
-        <rect
-          x={angleLabelX - 8} y={angleLabelY - 5}
-          width={16} height={7}
-          fill="rgba(9,9,11,0.8)" rx="1"
-        />
-        <text x={angleLabelX} y={angleLabelY} textAnchor="middle" fill="#a1a1aa" fontSize="5">
-          {launchAngle}°
-        </text>
+
+        {/* Foul lines */}
+        <line x1={HOME.x} y1={HOME.y} x2={LF_END.x} y2={LF_END.y} stroke="#27272a" strokeWidth="0.75" />
+        <line x1={HOME.x} y1={HOME.y} x2={RF_END.x} y2={RF_END.y} stroke="#27272a" strokeWidth="0.75" />
+
+        {/* Static ground shadow line (very dim) */}
+        <path d={shadowPath} fill="none" stroke="#27272a" strokeWidth="0.75" strokeDasharray="2.5 2" />
 
         {/* ── Moving ground shadow ───────────────────────────── */}
-        {/* Ellipse moves under ball at ground level (linear = uniform horizontal velocity) */}
-        <ellipse rx="6" ry="2" fill="#000" opacity="0">
+        {/* Ellipse tracks the ball's footprint; fades out near landing */}
+        <ellipse rx="4.5" ry="1.8" fill="#000" opacity="0">
           <animate attributeName="opacity"
-            values="0;0;0.45;0.45;0" keyTimes="0;0.04;0.08;0.87;1"
+            values="0;0;0.55;0.55;0" keyTimes="0;0.04;0.08;0.86;1"
             dur={dur} begin={begin} fill="freeze" />
           <animateMotion dur={dur} begin={begin} fill="freeze" calcMode="linear">
             <mpath href={`#${shadowId}`} />
           </animateMotion>
         </ellipse>
 
+        {/* ── Home plate ─────────────────────────────────────── */}
+        <polygon
+          points={`${HOME.x},${HOME.y-3.5} ${HOME.x+3},${HOME.y} ${HOME.x},${HOME.y+2} ${HOME.x-3},${HOME.y}`}
+          fill="#3f3f46"
+        />
+
+        {/* ── Launch angle indicator ─────────────────────────── */}
+        <line x1={HOME.x} y1={HOME.y} x2={indX} y2={indY}
+          stroke="#52525b" strokeWidth="1" strokeLinecap="round" />
+        <text x={indX - 10} y={indY - 3} fill="#a1a1aa" fontSize="5.5"
+          stroke="#18181b" strokeWidth="2.5" paintOrder="stroke fill">{launchAngle}°</text>
+
         {/* ── Trajectory arc ─────────────────────────────────── */}
 
-        {/* Glow arc (blurred, colored) — draws with physics easing */}
-        <path d={arcPath} fill="none" stroke={glowColor} strokeWidth="4" opacity="0"
+        {/* Glow arc underneath (blurred, colored) */}
+        <path d={ballPath} fill="none" stroke={glowColor} strokeWidth="3.5" opacity="0"
           filter={`url(#${blurId})`}
           pathLength="1" strokeDasharray="1" strokeDashoffset="1">
           <animate attributeName="stroke-dashoffset" values="1;0.5;0"
             keyTimes={pKT} calcMode="spline" keySplines={pKS}
             dur={dur} begin={begin} fill="freeze" />
-          <animate attributeName="opacity" values="0;0.5;0.5" keyTimes="0;0.04;1"
+          <animate attributeName="opacity" values="0;0.55;0.55" keyTimes="0;0.04;1"
             dur={dur} begin={begin} fill="freeze" />
         </path>
 
-        {/* Main arc (bright, slightly glowing) — draws with physics easing */}
-        <path d={arcPath} fill="none" stroke="#c4c4cf" strokeWidth="1.5"
+        {/* Main arc (bright, sharp) */}
+        <path d={ballPath} fill="none" stroke="#e4e4e7" strokeWidth="1.2"
           filter={`url(#${glowId})`}
           pathLength="1" strokeDasharray="1" strokeDashoffset="1">
           <animate attributeName="stroke-dashoffset" values="1;0.5;0"
@@ -198,73 +194,67 @@ export default function HRTrajectory({ launchAngle, distance, exitVelo, index, c
         </path>
 
         {/* ── Spark particles ────────────────────────────────── */}
+        {/* Brief expanding flashes at sampled points as ball passes through */}
         {sparks.map(({ x, y }, i) => (
           <circle key={i} cx={x} cy={y} r="1" fill={glowColor} opacity="0">
-            <animate attributeName="opacity" values="0;0.9;0"
-              keyTimes="0;0.12;1" dur="0.4s" begin={sparkBegins[i]} fill="freeze" />
-            <animate attributeName="r" from="1" to="6" dur="0.4s" begin={sparkBegins[i]} fill="freeze" />
+            <animate attributeName="opacity" values="0;0.85;0"
+              keyTimes="0;0.12;1" dur="0.45s" begin={sparkBegins[i]} fill="freeze" />
+            <animate attributeName="r" from="1" to="5.5" dur="0.45s" begin={sparkBegins[i]} fill="freeze" />
           </circle>
         ))}
 
         {/* ── Ball ───────────────────────────────────────────── */}
 
-        {/* Glow halo (blurred, colored) — physics motion */}
-        <circle r="9" fill={glowColor} opacity="0" filter={`url(#${blurId})`}>
-          <animate attributeName="opacity" values="0;0;0.7;0.7;0"
+        {/* Glow halo (blurred, colored) */}
+        <circle r="8" fill={glowColor} opacity="0" filter={`url(#${blurId})`} cx={HOME.x} cy={HOME.y}>
+          <animate attributeName="opacity" values="0;0;0.75;0.75;0"
             keyTimes="0;0.04;0.07;0.82;1"
             dur={dur} begin={begin} fill="freeze" />
           <animateMotion dur={dur} begin={begin} fill="freeze"
             calcMode="spline" keyTimes={pKT} keyPoints={pKP} keySplines={pKS}>
-            <mpath href={`#${arcId}`} />
+            <mpath href={`#${pathId}`} />
           </animateMotion>
         </circle>
 
-        {/* Ball (solid; fades out just before landing dot appears) */}
-        <circle r="3.5" fill="#f4f4f5" opacity="0">
+        {/* Ball (solid white; fades out just before landing dot) */}
+        <circle r="3.5" fill="#f4f4f5" cx={HOME.x} cy={HOME.y} opacity="0">
           <animate attributeName="opacity" values="0;1;1;0"
             keyTimes="0;0.05;0.82;1"
             dur={dur} begin={begin} fill="freeze" />
           <animateMotion dur={dur} begin={begin} fill="freeze"
             calcMode="spline" keyTimes={pKT} keyPoints={pKP} keySplines={pKS}>
-            <mpath href={`#${arcId}`} />
+            <mpath href={`#${pathId}`} />
           </animateMotion>
         </circle>
 
-        {/* ── Exit velo label ────────────────────────────────── */}
+        {/* ── Exit velo label (near apex) ────────────────────── */}
         {exitVelo != null && (
-          <g opacity="0">
-            {/* Appears near apex: 58% × 1.2s + 0.05s ≈ 0.75s */}
+          <text x={veloX - 2} y={veloY - 5} textAnchor="middle" fill="#a1a1aa" fontSize="6" opacity="0"
+            stroke="#18181b" strokeWidth="2.5" paintOrder="stroke fill">
+            {exitVelo} mph
             <animate attributeName="opacity" from="0" to="1" dur="0.2s" begin="0.72s" fill="freeze" />
-            <rect
-              x={veloLabelX - 16} y={veloLabelY - 5}
-              width={32} height={9}
-              fill="rgba(9,9,11,0.85)" rx="1"
-            />
-            <text x={veloLabelX} y={veloLabelY + 2} textAnchor="middle" fill="#a1a1aa" fontSize="6">
-              {exitVelo} mph
-            </text>
-          </g>
+          </text>
         )}
 
         {/* ── Landing ────────────────────────────────────────── */}
 
-        {/* White flash on impact */}
+        {/* Flash on impact */}
         <circle cx={landX} cy={landY} r="2.5" fill="white" opacity="0">
-          <animate attributeName="opacity" values="0;1;0" keyTimes="0;0.05;1" dur="0.28s" begin={landAt} fill="freeze" />
-          <animate attributeName="r" from="2.5" to="9" dur="0.28s" begin={landAt} fill="freeze" />
+          <animate attributeName="opacity" values="0;1;0" keyTimes="0;0.05;1" dur="0.3s" begin={landAt} fill="freeze" />
+          <animate attributeName="r" from="2.5" to="8" dur="0.3s" begin={landAt} fill="freeze" />
         </circle>
 
         {/* Outer ring */}
         <circle cx={landX} cy={landY} r="2.5" fill="none" stroke="#e4e4e7" strokeWidth="1.2" opacity="0">
-          <animate attributeName="opacity" values="0;0.85;0" keyTimes="0;0.08;1" dur="0.65s" begin={landAt} fill="freeze" />
-          <animate attributeName="r" from="2.5" to="16" dur="0.65s" begin={landAt} fill="freeze" />
+          <animate attributeName="opacity" values="0;0.9;0" keyTimes="0;0.08;1" dur="0.65s" begin={landAt} fill="freeze" />
+          <animate attributeName="r" from="2.5" to="15" dur="0.65s" begin={landAt} fill="freeze" />
           <animate attributeName="stroke-width" from="1.2" to="0.2" dur="0.65s" begin={landAt} fill="freeze" />
         </circle>
 
         {/* Inner ring */}
         <circle cx={landX} cy={landY} r="2.5" fill="none" stroke="#71717a" strokeWidth="0.9" opacity="0">
-          <animate attributeName="opacity" values="0;0.55;0" keyTimes="0;0.12;1" dur="0.42s" begin={landAt} fill="freeze" />
-          <animate attributeName="r" from="2.5" to="9" dur="0.42s" begin={landAt} fill="freeze" />
+          <animate attributeName="opacity" values="0;0.6;0" keyTimes="0;0.12;1" dur="0.45s" begin={landAt} fill="freeze" />
+          <animate attributeName="r" from="2.5" to="9" dur="0.45s" begin={landAt} fill="freeze" />
         </circle>
 
         {/* Landing dot */}
@@ -273,30 +263,16 @@ export default function HRTrajectory({ launchAngle, distance, exitVelo, index, c
         </circle>
 
         {/* Distance label */}
-        <g opacity="0">
+        <text x={landX} y={landY + 10} textAnchor="middle" fill="#a1a1aa" fontSize="5.5" opacity="0"
+          stroke="#18181b" strokeWidth="2.5" paintOrder="stroke fill">
+          {distance} ft
           <animate attributeName="opacity" from="0" to="1" dur="0.2s" begin={landAt} fill="freeze" />
-          <rect
-            x={landX - 14} y={landY + 3}
-            width={28} height={8}
-            fill="rgba(9,9,11,0.85)" rx="1"
-          />
-          <text x={landX} y={landY + 9} textAnchor="middle" fill="#a1a1aa" fontSize="5.5">
-            {distance} ft
-          </text>
-        </g>
+        </text>
 
-        {/* ── Spray mini-map ─────────────────────────────────── */}
-        {hasSpray && (
-          <g>
-            <path d="M 9,30 A 13,13 0 0 1 35,30" fill="none" stroke="#3f3f46" strokeWidth="0.8" />
-            <line
-              x1="22" y1="30"
-              x2={sprayEndX} y2={sprayEndY}
-              stroke="#52525b" strokeWidth="1" strokeLinecap="round"
-            />
-            <circle cx={sprayEndX} cy={sprayEndY} r="1.5" fill="#a1a1aa" />
-          </g>
-        )}
+        {/* Venue */}
+        <text x={W / 2} y={H - 1} textAnchor="middle" fill="#3f3f46" fontSize="5" fontStyle="italic">
+          {venue}
+        </text>
       </svg>
     </div>
   );
