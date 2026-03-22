@@ -5,6 +5,8 @@ import Link from "next/link";
 import type { PlayerHRDetail, HRGameLogEntry } from "@/lib/mlb";
 import HRTrajectory from "@/components/HRTrajectory";
 import HRSprayMap from "@/components/HRSprayMap";
+import PitchZoneMap from "@/components/PitchZoneMap";
+import PitchTypeBreakdown from "@/components/PitchTypeBreakdown";
 import { addSuffix } from "@/lib/utils";
 
 // ── Flag system ───────────────────────────────────────────────────────────────
@@ -388,6 +390,25 @@ export default function HRFlipbook({
         </div>
 
       </div>
+
+      {/* ── Pitch row ── */}
+      {(hrs.some((h) => h.pitchX != null) || hrs.some((h) => h.pitchType != null)) && (
+        <div className="grid grid-cols-2 gap-2 mt-2">
+
+          {/* Pitch zone */}
+          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-2.5">
+            <p className="text-xs text-zinc-600 tracking-widest uppercase mb-2">zone</p>
+            <PitchZoneMap hrs={hrs} activeIdx={hr.flatIdx} />
+          </div>
+
+          {/* Pitch type breakdown */}
+          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-2.5">
+            <p className="text-xs text-zinc-600 tracking-widest uppercase mb-2">pitch types</p>
+            <PitchTypeBreakdown hrs={hrs} activePitchType={hr.pitchType} />
+          </div>
+
+        </div>
+      )}
     </div>
   );
 }
