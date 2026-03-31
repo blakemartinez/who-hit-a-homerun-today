@@ -18,13 +18,16 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 async function fetchPlayerData(playerId: number) {
-  const [info, stats, hrLog] = await Promise.all([
+  const [info, stats] = await Promise.all([
     getPlayerInfo(playerId),
     getSeasonStats(playerId),
-    getHRGameLog(playerId),
   ]);
 
   if (!info) return null;
+
+  // Use the same season for HR game log so timeline matches displayed stats
+  const season = stats ? Number(stats.season) : undefined;
+  const hrLog = await getHRGameLog(playerId, season);
 
   const hrDetails =
     hrLog.length > 0 ? await getPlayerHRDetails(playerId, hrLog) : [];
