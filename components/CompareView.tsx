@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { playerImageUrl } from "@/lib/utils";
+import HRSprayMap from "@/components/HRSprayMap";
 import type { PlayerInfo, SeasonStats, HRGameLogEntry, PlayerHRDetail } from "@/lib/mlb";
 
 interface PlayerData {
@@ -40,7 +41,7 @@ function WinnerCell({
 
   return (
     <span
-      className={`font-bold text-base tabular-nums ${
+      className={`font-bold text-sm sm:text-base tabular-nums ${
         isWinner ? "text-emerald-400" : "text-zinc-100"
       }`}
     >
@@ -64,7 +65,7 @@ function StatRow({
 }) {
   return (
     <div className="grid grid-cols-3 items-center py-2 border-b border-zinc-800/50 last:border-b-0">
-      <div className="text-right pr-4">
+      <div className="text-right pr-2 sm:pr-4 min-w-0">
         <WinnerCell
           value={v1}
           otherValue={v2}
@@ -77,7 +78,7 @@ function StatRow({
           {label}
         </span>
       </div>
-      <div className="text-left pl-4">
+      <div className="text-left pl-2 sm:pl-4 min-w-0">
         <WinnerCell
           value={v2}
           otherValue={v1}
@@ -239,6 +240,23 @@ export default function CompareView({
           format={(v) => `${v} mph`}
         />
         <StatRow label="Clutch" v1={s1.clutchHRs} v2={s2.clutchHRs} />
+      </div>
+
+      {/* HR spray chart */}
+      <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 mb-6">
+        <p className="text-center text-zinc-600 text-xs tracking-widest uppercase mb-3">
+          HR spray chart
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <p className="text-zinc-500 text-xs mb-1 text-center">{player1.info.fullName}</p>
+            <HRSprayMap hrs={player1.hrDetails} />
+          </div>
+          <div>
+            <p className="text-zinc-500 text-xs mb-1 text-center">{player2.info.fullName}</p>
+            <HRSprayMap hrs={player2.hrDetails} />
+          </div>
+        </div>
       </div>
 
       {/* HR timeline */}
