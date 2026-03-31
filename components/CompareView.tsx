@@ -3,7 +3,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { playerImageUrl } from "@/lib/utils";
-import HRSprayMap from "@/components/HRSprayMap";
 import type { PlayerInfo, SeasonStats, HRGameLogEntry, PlayerHRDetail } from "@/lib/mlb";
 
 interface PlayerData {
@@ -148,6 +147,86 @@ function HRTimeline({
   );
 }
 
+// Field landmarks in MLB spray chart coordinate space
+const HOME = { x: 125, y: 205 };
+const LF   = { x: 22,  y: 82 };
+const RF   = { x: 228, y: 82 };
+const CF   = { x: 125, y: 16 };
+const B1   = { x: 173, y: 157 };
+const B2   = { x: 125, y: 110 };
+const B3   = { x: 77,  y: 157 };
+const MOUND = { x: 125, y: 158 };
+
+function CompareSprayMap({
+  p1Name,
+  p1Hrs,
+  p2Name,
+  p2Hrs,
+}: {
+  p1Name: string;
+  p1Hrs: PlayerHRDetail[];
+  p2Name: string;
+  p2Hrs: PlayerHRDetail[];
+}) {
+  const P1_COLOR = "#60a5fa"; // blue-400
+  const P2_COLOR = "#f87171"; // red-400
+
+  const dots = [
+    ...p1Hrs
+      .filter((h) => h.coordX != null && h.coordY != null)
+      .map((h) => ({ x: h.coordX!, y: h.coordY!, color: P1_COLOR })),
+    ...p2Hrs
+      .filter((h) => h.coordX != null && h.coordY != null)
+      .map((h) => ({ x: h.coordX!, y: h.coordY!, color: P2_COLOR })),
+  ];
+
+  if (dots.length === 0) {
+    return <p className="text-zinc-700 text-xs text-center py-4">no spray data available</p>;
+  }
+
+  return (
+    <div className="max-w-xs mx-auto">
+      <svg viewBox="0 0 250 215" className="w-full block" aria-label="Combined HR spray chart">
+        {/* Outfield arc */}
+        <path
+          d={`M ${LF.x},${LF.y} Q ${CF.x},${CF.y} ${RF.x},${RF.y}`}
+          fill="none" stroke="#27272a" strokeWidth="1"
+        />
+        {/* Foul lines */}
+        <line x1={HOME.x} y1={HOME.y} x2={LF.x} y2={LF.y} stroke="#27272a" strokeWidth="0.75" />
+        <line x1={HOME.x} y1={HOME.y} x2={RF.x} y2={RF.y} stroke="#27272a" strokeWidth="0.75" />
+        {/* Infield diamond */}
+        <polygon
+          points={`${HOME.x},${HOME.y} ${B1.x},${B1.y} ${B2.x},${B2.y} ${B3.x},${B3.y}`}
+          fill="none" stroke="#3f3f46" strokeWidth="0.7"
+        />
+        {/* Mound */}
+        <circle cx={MOUND.x} cy={MOUND.y} r="3" fill="none" stroke="#3f3f46" strokeWidth="0.6" />
+        {/* Home plate */}
+        <polygon
+          points={`${HOME.x},${HOME.y - 3} ${HOME.x + 2.5},${HOME.y} ${HOME.x},${HOME.y + 1.5} ${HOME.x - 2.5},${HOME.y}`}
+          fill="#3f3f46"
+        />
+        {/* HR dots */}
+        {dots.map((d, i) => (
+          <circle key={i} cx={d.x} cy={d.y} r="4" fill={d.color} opacity="0.65" />
+        ))}
+      </svg>
+      {/* Legend */}
+      <div className="flex justify-center gap-5 mt-2">
+        <span className="flex items-center gap-1.5 text-xs text-zinc-500">
+          <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: P1_COLOR }} />
+          {p1Name}
+        </span>
+        <span className="flex items-center gap-1.5 text-xs text-zinc-500">
+          <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: P2_COLOR }} />
+          {p2Name}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function CompareView({
   player1,
   player2,
@@ -242,21 +321,17 @@ export default function CompareView({
         <StatRow label="Clutch" v1={s1.clutchHRs} v2={s2.clutchHRs} />
       </div>
 
-      {/* HR spray chart */}
+      {/* Combined HR spray chart */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 mb-6">
         <p className="text-center text-zinc-600 text-xs tracking-widest uppercase mb-3">
           HR spray chart
         </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <p className="text-zinc-500 text-xs mb-1 text-center">{player1.info.fullName}</p>
-            <HRSprayMap hrs={player1.hrDetails} />
-          </div>
-          <div>
-            <p className="text-zinc-500 text-xs mb-1 text-center">{player2.info.fullName}</p>
-            <HRSprayMap hrs={player2.hrDetails} />
-          </div>
-        </div>
+        <CompareSprayMap
+          p1Name={player1.info.fullName}
+          p1Hrs={player1.hrDetails}
+          p2Name={player2.info.fullName}
+          p2Hrs={player2.hrDetails}
+        />
       </div>
 
       {/* HR timeline */}
