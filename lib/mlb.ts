@@ -235,3 +235,13 @@ export async function getHRLeaders(season: number): Promise<HRLeader[]> {
   const data = await res.json();
   return data.leagueLeaders?.[0]?.leaders ?? [];
 }
+
+export async function getHRLeadersWithTeam(season: number, limit = 50): Promise<HRLeader[]> {
+  const res = await fetch(
+    `${MLB_API}/stats/leaders?leaderCategories=homeRuns&season=${season}&limit=${limit}&sportId=1`,
+    { next: { revalidate: 3600 } }
+  );
+  if (!res.ok) return [];
+  const data = await res.json();
+  return data.leagueLeaders?.[0]?.leaders ?? [];
+}

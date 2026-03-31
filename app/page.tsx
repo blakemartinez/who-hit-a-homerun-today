@@ -276,6 +276,14 @@ export default async function Page({
       </div>
 
       <footer className="text-center text-zinc-700 text-xs py-8">
+        <p className="mb-3">
+          <a
+            href="/leaderboard"
+            className="text-zinc-500 hover:text-zinc-300 transition-colors uppercase tracking-widest text-[10px]"
+          >
+            HR Leaderboard
+          </a>
+        </p>
         <p>
           data via{" "}
           <a
