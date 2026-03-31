@@ -96,6 +96,8 @@ Issues labeled `minion` are picked up by a polling loop (`/loop 5m /issue-poll`)
 - `.claude/prompts/issue-poll.md` — Polling logic (check for `minion`-labeled issues)
 
 **Label lifecycle:** `minion` → `in-progress` (being worked) → `pr-ready` (PR created, awaiting Blake's merge)
+
+**PR comment monitoring:** A second loop (`/loop 5m pr-watch`) monitors open PRs for new comments from Blake or issue authors. If Blake requests a fix, the mayor auto-fixes and replies. If someone asks a question, it answers. See `.claude/prompts/pr-watch.md`.
 ## Commits
 
 Always include this co-author trailer:
