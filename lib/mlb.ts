@@ -226,6 +226,31 @@ export async function getPlayerHRDetails(
   return results.flat();
 }
 
+// --- Player search ---
+
+export interface SearchPlayerResult {
+  id: number;
+  fullName: string;
+  teamName: string;
+  position: string;
+}
+
+export async function searchPlayers(query: string): Promise<SearchPlayerResult[]> {
+  const res = await fetch(
+    `${MLB_API}/people/search?names=${encodeURIComponent(query)}&sportId=1`,
+    { next: { revalidate: 300 } }
+  );
+  if (!res.ok) return [];
+  const data = await res.json();
+  type RawPerson = Record<string, unknown>;
+  return ((data.people ?? []) as RawPerson[]).slice(0, 10).map((p) => ({
+    id: p.id as number,
+    fullName: p.fullName as string,
+    teamName: ((p.currentTeam as Record<string, unknown>)?.name as string) ?? "Unknown",
+    position: ((p.primaryPosition as Record<string, unknown>)?.abbreviation as string) ?? "?",
+  }));
+}
+
 export async function getHRLeaders(season: number): Promise<HRLeader[]> {
   const res = await fetch(
     `${MLB_API}/stats/leaders?leaderCategories=homeRuns&season=${season}&limit=5&sportId=1`,
