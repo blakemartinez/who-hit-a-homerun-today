@@ -59,6 +59,43 @@ Next.js 15 App Router, TypeScript, Tailwind CSS.
 
 Cards support up to 3 visible borders via `border` + `ring` + `outline`.
 
+## Orchestration
+
+This project uses a lightweight Gastown-inspired multi-agent orchestration system.
+
+**To use it:** Describe a feature. Claude acts as Mayor Minion — it plans, spawns parallel Worker Minions in isolated git worktrees, then Blake Review Minions approve+merge or request changes.
+
+**Key files:**
+- `ORCHESTRATION.md` — living task state (source of truth); always committed to master
+- `.claude/prompts/mayor.md` — Mayor Minion planning logic
+- `.claude/prompts/worker.md` — Worker Minion instructions
+- `.claude/prompts/reviewer.md` — Blake Review Minion instructions
+
+**Minion roles:**
+- **Mayor Minion** — orchestrates, decomposes features, spawns workers and reviewers
+- **Worker Minion** — implements tasks in isolated worktrees, creates PRs with screenshots
+- **Blake Review Minion** — reviews code diff + screenshot, approves+merges or requests changes
+
+**Task lifecycle:** `todo` → `in_progress` → `done` → `merged`
+
+**Quality gate:** Every Worker Minion must pass `npx tsc --noEmit` + `npm run lint` before creating a PR. No exceptions.
+
+**Worker Minions never push to master** — only feature branches via PRs. Blake Review Minion handles the merge.
+
+### Issue-Driven Automation
+
+Issues labeled `minion` are picked up by a polling loop (`/loop 5m /issue-poll`) that runs in the active Claude Code session.
+
+**Flow:** Label issue `minion` → loop picks it up → Issue Mayor triages → plans tasks → Worker Minions implement → Issue Reviewer comments on PR → Blake merges.
+
+**Key difference from interactive orchestration:** Issue-driven PRs are **never auto-merged**. Blake reviews and merges them himself.
+
+**Key files:**
+- `.claude/prompts/issue-mayor.md` — Issue-specific mayor (triage step, links issues in PRs)
+- `.claude/prompts/issue-reviewer.md` — Reviewer that comments but does NOT merge
+- `.claude/prompts/issue-poll.md` — Polling logic (check for `minion`-labeled issues)
+
+**Label lifecycle:** `minion` → `in-progress` (being worked) → `pr-ready` (PR created, awaiting Blake's merge)
 ## Commits
 
 Always include this co-author trailer:
