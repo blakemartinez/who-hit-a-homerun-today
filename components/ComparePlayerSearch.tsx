@@ -13,9 +13,11 @@ interface SearchResult {
 export default function ComparePlayerSearch({
   slot,
   label,
+  selectedName,
 }: {
   slot: "p1" | "p2";
   label: string;
+  selectedName?: string;
 }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -104,6 +106,13 @@ export default function ComparePlayerSearch({
           <span className="text-zinc-600 text-xs tracking-widest">...</span>
         )}
       </div>
+
+      {selectedName && !focused && (
+        <p className="mt-1.5 text-sm text-zinc-300 truncate">
+          <span className="text-emerald-500 mr-1">✓</span>
+          {selectedName}
+        </p>
+      )}
 
       {showDropdown && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-zinc-900 border border-zinc-700 rounded-lg shadow-2xl z-20 max-h-64 overflow-y-auto">

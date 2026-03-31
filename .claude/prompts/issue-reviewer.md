@@ -28,6 +28,11 @@ Check:
 - Are changes minimal and focused (no unrelated changes)?
 - Does it follow the project patterns (TypeScript strict, Tailwind, Next.js App Router)?
 - Are there any security concerns (XSS, injection, etc.)?
+- **UX checks:** Does the UI provide adequate feedback for user actions? (e.g., visual cue when a selection is made, loading states, empty states)
+- **Season/data consistency:** If the code fetches stats for auto-detected seasons, verify that the displayed season header matches the actual data. Watch for `getSeasonStats` / `getHRGameLog` returning data from different seasons.
+- **Navigation:** Ensure back links and internal nav use `<Link>` without `target="_blank"`. Only external links should open new tabs.
+- **Mobile responsiveness:** Check that layouts use responsive classes (e.g., `grid-cols-1 sm:grid-cols-2`) and text doesn't overflow on narrow screens.
+- **Column labels:** Verify table headers accurately describe the data in each column.
 
 ### 3. Read the screenshot
 The screenshot is committed on the PR branch at `.github/pr-screenshots/pr-<PR_NUMBER>.png`.

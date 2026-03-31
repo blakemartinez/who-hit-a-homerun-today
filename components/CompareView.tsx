@@ -261,7 +261,9 @@ export default function CompareView({
   const s1 = hrStats(player1);
   const s2 = hrStats(player2);
 
-  const season = player1.stats?.season ?? player2.stats?.season ?? "";
+  const season = player1.stats?.season ?? player2.stats?.season ?? String(new Date().getFullYear());
+  const p1HasStats = player1.stats != null;
+  const p2HasStats = player2.stats != null;
 
   return (
     <div>
@@ -276,16 +278,24 @@ export default function CompareView({
         <p className="text-center text-zinc-600 text-xs tracking-widest uppercase mb-3">
           {season} season stats
         </p>
-        <StatRow label="G" v1={player1.stats?.gamesPlayed ?? null} v2={player2.stats?.gamesPlayed ?? null} />
-        <StatRow label="AVG" v1={player1.stats?.avg ?? null} v2={player2.stats?.avg ?? null} />
-        <StatRow
-          label="HR"
-          v1={player1.stats?.homeRuns ?? null}
-          v2={player2.stats?.homeRuns ?? null}
-        />
-        <StatRow label="RBI" v1={player1.stats?.rbi ?? null} v2={player2.stats?.rbi ?? null} />
-        <StatRow label="OBP" v1={player1.stats?.obp ?? null} v2={player2.stats?.obp ?? null} />
-        <StatRow label="OPS" v1={player1.stats?.ops ?? null} v2={player2.stats?.ops ?? null} />
+        {!p1HasStats && !p2HasStats ? (
+          <p className="text-zinc-600 text-sm text-center py-2">
+            no {season} stats available for either player.
+          </p>
+        ) : (
+          <>
+            <StatRow label="G" v1={player1.stats?.gamesPlayed ?? null} v2={player2.stats?.gamesPlayed ?? null} />
+            <StatRow label="AVG" v1={player1.stats?.avg ?? null} v2={player2.stats?.avg ?? null} />
+            <StatRow
+              label="HR"
+              v1={player1.stats?.homeRuns ?? null}
+              v2={player2.stats?.homeRuns ?? null}
+            />
+            <StatRow label="RBI" v1={player1.stats?.rbi ?? null} v2={player2.stats?.rbi ?? null} />
+            <StatRow label="OBP" v1={player1.stats?.obp ?? null} v2={player2.stats?.obp ?? null} />
+            <StatRow label="OPS" v1={player1.stats?.ops ?? null} v2={player2.stats?.ops ?? null} />
+          </>
+        )}
       </div>
 
       {/* HR-specific comparison */}

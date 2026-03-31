@@ -308,7 +308,7 @@ function DailyView({ data }: { data: LeaderboardData }) {
                       <th className="text-left py-2 px-2">Player</th>
                       <th className="text-left py-2 px-2 hidden sm:table-cell">Team</th>
                       <th className="text-left py-2 px-2 hidden sm:table-cell">Opponent</th>
-                      <th className="text-right py-2 px-4">HRs</th>
+                      <th className="text-right py-2 px-4">HR/Game</th>
                     </tr>
                   </thead>
                   <tbody>

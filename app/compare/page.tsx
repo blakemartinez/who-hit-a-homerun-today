@@ -18,6 +18,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 async function fetchPlayerData(playerId: number) {
+  const currentYear = new Date().getFullYear();
   const [info, stats] = await Promise.all([
     getPlayerInfo(playerId),
     getSeasonStats(playerId),
@@ -25,14 +26,17 @@ async function fetchPlayerData(playerId: number) {
 
   if (!info) return null;
 
-  // Use the same season for HR game log so timeline matches displayed stats
-  const season = stats ? Number(stats.season) : undefined;
-  const hrLog = await getHRGameLog(playerId, season);
+  // If stats are from a previous season (not current year), treat as no stats
+  const statsForCurrentSeason =
+    stats && Number(stats.season) === currentYear ? stats : null;
+
+  // Only fetch HR game log for the current season
+  const hrLog = await getHRGameLog(playerId, currentYear);
 
   const hrDetails =
     hrLog.length > 0 ? await getPlayerHRDetails(playerId, hrLog) : [];
 
-  return { info, stats, hrLog, hrDetails };
+  return { info, stats: statsForCurrentSeason, hrLog, hrDetails };
 }
 
 export default async function ComparePage({
@@ -44,16 +48,23 @@ export default async function ComparePage({
   const p1Id = params.p1 ? Number(params.p1) : null;
   const p2Id = params.p2 ? Number(params.p2) : null;
 
-  const hasBoth = p1Id != null && p2Id != null && !isNaN(p1Id) && !isNaN(p2Id);
+  const hasP1 = p1Id != null && !isNaN(p1Id);
+  const hasP2 = p2Id != null && !isNaN(p2Id);
+  const hasBoth = hasP1 && hasP2;
 
   let player1 = null;
   let player2 = null;
 
+  // Fetch both if both selected, or just one for the name preview
   if (hasBoth) {
     [player1, player2] = await Promise.all([
-      fetchPlayerData(p1Id),
-      fetchPlayerData(p2Id),
+      fetchPlayerData(p1Id!),
+      fetchPlayerData(p2Id!),
     ]);
+  } else if (hasP1) {
+    player1 = await fetchPlayerData(p1Id!);
+  } else if (hasP2) {
+    player2 = await fetchPlayerData(p2Id!);
   }
 
   return (
@@ -78,8 +89,8 @@ export default async function ComparePage({
 
         {/* Search inputs */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
-          <ComparePlayerSearch slot="p1" label="Player 1" />
-          <ComparePlayerSearch slot="p2" label="Player 2" />
+          <ComparePlayerSearch slot="p1" label="Player 1" selectedName={player1?.info.fullName} />
+          <ComparePlayerSearch slot="p2" label="Player 2" selectedName={player2?.info.fullName} />
         </div>
 
         {/* Results */}
