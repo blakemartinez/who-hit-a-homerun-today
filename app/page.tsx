@@ -286,6 +286,13 @@ export default async function Page({
           >
             MLB Stats API
           </a>
+          <span className="mx-2">&middot;</span>
+          <a
+            href="/compare"
+            className="hover:text-zinc-500 transition-colors"
+          >
+            compare players
+          </a>
         </p>
         <p className="mt-1">
           <a
