@@ -162,16 +162,19 @@ export default function CompareView({
     const velos = data.hrDetails
       .map((h) => h.exitVelo)
       .filter((v): v is number => v != null);
+    const totalHRs = data.stats?.homeRuns ?? data.hrLog.reduce((s, g) => s + g.homeRuns, 0);
+    // If player has 0 HRs this season, don't show stale breakdown from a different season
+    const hasHRs = totalHRs > 0;
     return {
-      totalHRs: data.stats?.homeRuns ?? data.hrLog.reduce((s, g) => s + g.homeRuns, 0),
-      avgDistance: avg(dists),
-      avgExitVelo: avg(velos),
-      longestHR: dists.length > 0 ? Math.max(...dists) : null,
-      fastestHR: velos.length > 0 ? Math.max(...velos) : null,
-      clutchHRs: data.hrDetails.filter(
+      totalHRs,
+      avgDistance: hasHRs ? avg(dists) : 0,
+      avgExitVelo: hasHRs ? avg(velos) : 0,
+      longestHR: hasHRs && dists.length > 0 ? Math.max(...dists) : null,
+      fastestHR: hasHRs && velos.length > 0 ? Math.max(...velos) : null,
+      clutchHRs: hasHRs ? data.hrDetails.filter(
         (h) => (h.captivatingIndex ?? 0) >= 80
-      ).length,
-      dates: data.hrDetails.map((h) => h.date),
+      ).length : 0,
+      dates: hasHRs ? data.hrDetails.map((h) => h.date) : [],
     };
   }
 
