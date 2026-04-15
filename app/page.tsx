@@ -30,7 +30,7 @@ export async function generateMetadata({
   const description = isToday
     ? "Live MLB home run tracker — see every home run hit today with distance, exit velocity, launch angle, and pitch data."
     : `MLB home runs hit on ${displayDate} — distance, exit velocity, launch angle, and pitch data for every home run.`;
-  const url = isToday ? "https://homeruntoday.vercel.app" : `https://homeruntoday.vercel.app/?date=${date}`;
+  const url = isToday ? "https://homeruntoday.blakemartinez.dev" : `https://homeruntoday.blakemartinez.dev/?date=${date}`;
 
   return {
     title,
@@ -322,7 +322,7 @@ export default async function Page({
             "@type": "WebPage",
             name: isToday ? "Who Hit a Homerun Today?" : `MLB Home Runs — ${displayDate}`,
             description: `MLB home runs hit on ${displayDate}`,
-            url: isToday ? "https://homeruntoday.vercel.app" : `https://homeruntoday.vercel.app/?date=${date}`,
+            url: isToday ? "https://homeruntoday.blakemartinez.dev" : `https://homeruntoday.blakemartinez.dev/?date=${date}`,
             about: {
               "@type": "SportsEvent",
               name: `MLB Games — ${displayDate}`,

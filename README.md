@@ -2,7 +2,7 @@
 
 *Dingers.*
 
-https://homeruntoday.vercel.app/
+https://homeruntoday.blakemartinez.dev/
 
 I just really like baseball and I really like numbers. This was supposed to be a quick weekend thing.
 

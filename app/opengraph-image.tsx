@@ -98,7 +98,7 @@ export default function Image() {
             letterSpacing: "0.05em",
           }}
         >
-          homeruntoday.vercel.app
+          homeruntoday.blakemartinez.dev
         </div>
       </div>
     ),

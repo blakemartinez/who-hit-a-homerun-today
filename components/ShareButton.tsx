@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-const BASE_URL = "https://homeruntoday.vercel.app";
+const BASE_URL = "https://homeruntoday.blakemartinez.dev";
 
 export default function ShareButton({ date, isToday }: { date: string; isToday: boolean }) {
   const [copied, setCopied] = useState(false);
